@@ -1,0 +1,44 @@
+{
+  "theme": "bootstrap3",
+  "disable_array_reorder": true,
+  "startval": {
+    "mapping": {
+      "id": "地區",
+      "time": "年度",
+      "cx": "消防人員數",
+      "cy": "消防車輛數",
+      "radius": "火災發生次數",
+      "color": "顏色"
+    }
+  },
+  "schema": {
+    "type": "object",
+    "title": "configuration",
+    "properties": {
+      "mapping": {
+        "type": "object",
+        "format": "table",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "cx": {
+            "type": "string"
+          },
+          "cy": {
+            "type": "string"
+          },
+          "radius": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
