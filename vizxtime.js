@@ -1,21 +1,27 @@
 /* global console, d3, queue */
 
 var G = {
+  filename: {
+    config: 'config.json',
+    regions: 'regions.csv',
+    data: 'data.csv'
+  },
   domain: {},
   scale: {}
 }; // global variables
 
+d3.select('#region-file').text(G.filename.regions);
+d3.select('#data-file').text(G.filename.data);
 queue()
-  .defer(d3.json, 'config.json')
-  .defer(d3.csv, 'regions.csv')
-  .defer(d3.csv, 'data.csv')
+  .defer(d3.json, G.filename.config)
+  .defer(d3.csv, G.filename.regions)
+  .defer(d3.csv, G.filename.data)
   .awaitAll(init);
 
 function organizeData(data) {
-console.log(data);
   G.fieldName = data[0].startval.fieldName;
-  // field name for "name", field name for "time"
-  var idFN = G.fieldName['name'], timeFN = G.fieldName['time'];
+  // field name for "region", field name for "time"
+  var idFN = G.fieldName['region'], timeFN = G.fieldName['time'];
   G.region = {};
   data[2].forEach(function (d) {
     if (! (d[idFN] in G.region)) {
@@ -40,7 +46,35 @@ function init(error, data) {
   organizeData(data);
   console.log(G);
 
-  // G.editor = new JSONEditor($('#config')[0], config);
+/*
+  var regionFieldNames = Object.keys(G.region).filter(function (d) {
+    return d != G.fieldName['region'] && d != G.fieldName['time'];
+  });
+  d3.select('#region-field-names')
+    .data(regionFieldNames)
+    .enter()
+    .append('span')
+    .attr('class', 'label label-primary')
+    .text(function (d) { return d; });
+*/
+
+  d3.select('#region-field').property('value', G.fieldName['region']);
+  d3.select('#time-field').property('value', G.fieldName['time']);
+
+  G.sample = { region: Object.keys(G.region)[0] };
+  G.sample.time = Object.keys(G.region[G.sample.region])[0];
+  G.sample.data = G.region[G.sample.region][G.sample.time];
+  var dataFieldNames = Object.keys(G.sample.data).filter(function (d) {
+    return d != G.fieldName['region'] && d != G.fieldName['time'];
+  });
+  d3.select('#data-field-names')
+    .selectAll('button')
+    .data(dataFieldNames)
+    .enter()
+    .append('button')
+    .attr('class', 'pure-secondary')
+    .text(function(d) { return d; });
+
   G.timeSlider = d3.slider().axis(true).min(2003).max(2014)
     .step(1).value(2014).on('slide', toTime);
   d3.select('#time-slider').call(G.timeSlider);
@@ -55,7 +89,7 @@ function init(error, data) {
 
   // http://bl.ocks.org/cpdean/7a71e687dd5a80f6fd57
   // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
-  d3.select('#viz-rsvg-wrapper')
+  d3.select('#viz-pane')
     .append('svg')
     .attr('preserveAspectRatio', 'xMinYMin meet')
     .attr('viewBox', '0 0 800 600')
@@ -78,11 +112,10 @@ function init(error, data) {
   canvas.append('g').attr('id', 'xAxis');
   canvas.append('g').attr('id', 'yAxis');
 
-  updateDomain();
-  refresh();
+  recalc();
 }
 
-function updateDomain() {
+function recalc() {
   var values, v;
   ['xAxis', 'yAxis', 'width'].forEach(function(k) {
     values = Object.keys(G.region).map(function(r) {
@@ -98,7 +131,7 @@ function updateDomain() {
   });
 
   // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
-  var viewBox = d3.select('#viz-rsvg-wrapper svg')
+  var viewBox = d3.select('#viz-pane svg')
     .attr('viewBox').split(' ').map(parseFloat);
   var width = viewBox[2], height = viewBox[3];
 
@@ -122,15 +155,17 @@ function updateDomain() {
   canvas.select('#yAxis')
     .attr('transform', 'translate(40,0)')
     .call(yAxis);
+
+  redraw();
 }
 
 function toTime(evt, value) {
   d3.select('#time-text').text(value);
   G.now = value;
-  refresh();
+  redraw();
 }
 
-function refresh() {
+function redraw() {
   var canvas = d3.select('#viz-canvas');
   // http://stackoverflow.com/questions/9589768/using-an-associative-array-as-data-for-d3
   var now = G.timeSlider.value();
@@ -145,7 +180,7 @@ function refresh() {
     .text(function(d) {
       var n = d.value[now];
       var msg =
-	G.fieldName['name'] + ':' + n[G.fieldName['name']] + '\n' +
+	G.fieldName['region'] + ':' + n[G.fieldName['region']] + '\n' +
 	G.fieldName['xAxis'] + ':' + n[G.fieldName['xAxis']] + '\n' +
 	G.fieldName['yAxis'] + ':' + n[G.fieldName['yAxis']] + '\n' +
 	G.fieldName['width'] + ':' + n[G.fieldName['width']];

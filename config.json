@@ -3,7 +3,7 @@
   "disable_array_reorder": true,
   "startval": {
     "fieldName": {
-      "name": "地區",
+      "region": "地區",
       "time": "年度",
       "xAxis": "消防人員數",
       "yAxis": "消防車輛數",

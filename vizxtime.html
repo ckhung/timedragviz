@@ -1,43 +1,100 @@
-<!DOCTYPE 
-html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns=
-"http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta name="generator" content=
   "HTML Tidy for Linux (vers 25 March 2009), see www.w3.org" />
-  <meta http-equiv="Content-Type"
-  content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content=
+  "width=device-width, initial-scale=1" />
 
   <title>VizXTime</title>
-
-  <link type="text/css" rel= "stylesheet" href="d3.slider.css" />
-  <link type="text/css" rel= "stylesheet" href="vizxtime.css" />
+  <link type="text/css" rel="stylesheet" href="pure-min.css" />
+  <link type="text/css" rel="stylesheet" href="grids-responsive-min.css" />
+  <link type="text/css" rel="stylesheet" href="d3.slider.css" />
+  <link type="text/css" rel="stylesheet" href="vizxtime.css" />
 </head>
 
 <body>
   <div id="content">
-
-    <div class="center">
-      <div id="viz-rsvg-wrapper" class="rsvg-container"></div>
-    </div>
-
-    <div class="center" style="padding-left: 40px">
-      <div style="float:left; width:92%">
-	<div id="time-slider"></div>
+    <div class="pure-g">
+      <div class="pure-u-3-4">
+	<div class="l-padding">
+          <div class="rsvg-container pure-u-1-1" id="viz-pane"></div>
+          <div class="pure-g">
+            <div class="pure-u-1-12"></div>
+            <div class="pure-u-17-24" id="time-slider"></div>
+            <div class="pure-u-1-12"></div>
+            <div class="pure-u-1-12">
+              <span id="time-text"></span>
+            </div>
+          </div>
+	</div>
       </div>
-      <div style="float:right; width:6%; text-align: center">
-	<span id="time-text"></span>
-      </div>
-    </div>
 
-    <div id="config"></div>
-  </div>
+      <div id="info-pane" class="pure-u-1-4">
+        <div class="l-padding">
+          <h1>VizXTime</h1>
 
-<script type="text/javascript" src="d3.js"></script>
-<script type="text/javascript" src="d3.slider.js"></script>
-<script type="text/javascript" src="queue.js"></script>
-<script type="text/javascript" src="vizxtime.js" id="vizxtime_script"></script>
+          <form class="pure-form pure-g">
+            <div class="s-padding">
+              <div class="pure-u-1-2">region file</div>
+              <div id="region-file" class="pure-u-1-2 emphasis"></div>
+            </div>
+
+            <div class="s-padding">
+              <div class="pure-u-1-2">data file</div>
+	      <div id="data-file" class="pure-u-1-2 emphasis"></div>
+            </div>
+
+            <div class="s-padding">
+              <label for="region-field" class="pure-u-1-2">name</label>
+              <input id="region-field" class="pure-u-1-2" type="text"
+              disabled="disabled" />
+            </div>
+
+            <div class="s-padding">
+              <label for="time-field" class="pure-u-1-2">time</label>
+              <input id="time-field" class="pure-u-1-2" type="text"
+              disabled="disabled" />
+            </div>
+
+            <div class="s-padding">
+              <label for="xAxis-field" class="pure-u-1-4">xAxis</label>
+              <input id="xAxis-field" class="pure-u-3-4" type="text"
+              disabled="disabled" />
+            </div>
+
+            <div class="s-padding">
+              <label for="yAxis-field" class="pure-u-1-4">yAxis</label>
+              <input id="yAxis-field" class="pure-u-3-4" type="text"
+              disabled="disabled" />
+            </div>
+
+            <div class="s-padding">
+              <label for="width-field" class="pure-u-1-4">width</label>
+              <input id="width-field" class="pure-u-3-4" type="text"
+              disabled="disabled" />
+            </div>
+
+            <div class="s-padding">
+              <label for="color-field" class="pure-u-1-4">color</label>
+              <input id="color-field" class="pure-u-3-4" type="text"
+              disabled="disabled" />
+            </div>
+          </form>
+
+          <div id="data-field-names" class="form-group"></div>
+        </div>
+      </div><!-- #info-pane -->
+    </div><!-- .pure-g -->
+  </div><!-- #content -->
+  <script type="text/javascript" src="d3.js">
+</script><script type="text/javascript" src="d3.slider.js">
+</script><script type="text/javascript" src="queue.js">
+</script><script type="text/javascript" src="vizxtime.js" id=
+"vizxtime_script">
+</script>
 </body>
 </html>
