@@ -78,12 +78,13 @@
             <div class="s-padding">
               <label for="color-field" class="pure-u-1-4">color</label>
               <input id="color-field" class="pure-u-3-4" type="text"
-              disabled="disabled" />
+              value="顏色" disabled="disabled" />
             </div>
 
             <div class="s-padding">
               <div class="pure-u-1-4"></div>
-	      <button type="submit" class="pure-button pure-button-primary pure-u-1-2" disabled="disabled" >重算!</button>
+	      <!-- http://stackoverflow.com/questions/19454310/stop-form-refreshing-page-on-submit -->
+	      <button type="button" id="recalc" class="pure-button pure-button-primary pure-u-1-2" >重算!</button>
               <div class="pure-u-1-4"></div>
 	    </div>
           </form>
@@ -94,11 +95,10 @@
       </div><!-- #info-pane -->
     </div><!-- .pure-g -->
   </div><!-- #content -->
-  <script type="text/javascript" src="d3.js">
-</script><script type="text/javascript" src="d3.slider.js">
-</script><script type="text/javascript" src="queue.js">
-</script><script type="text/javascript" src="vizxtime.js" id=
-"vizxtime_script">
-</script>
+  <script type="text/javascript" src="parser.js"> </script>
+  <script type="text/javascript" src="d3.js"> </script>
+  <script type="text/javascript" src="d3.slider.js"> </script>
+  <script type="text/javascript" src="queue.js"> </script>
+  <script type="text/javascript" src="vizxtime.js" id= "vizxtime_script"> </script>
 </body>
 </html>

@@ -34,12 +34,17 @@ body {
     padding: 0.1em;
 }
 
+.active {
+    background: rgb(255, 255, 224);
+}
+
 /* http://purecss.io/buttons/ */
 .pure-primary,
+.pure-secondary,
 .pure-success,
-.pure-error,
 .pure-warning,
-.pure-secondary {
+.pure-error
+{
     color: white;
     border-radius: 4px;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
