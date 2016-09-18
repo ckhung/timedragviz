@@ -6,6 +6,7 @@ var G = {
     regions: 'regions.csv',
     data: 'data.csv'
   },
+  lastFocus: null,
   domain: {},
   scale: {}
 }; // global variables
@@ -60,6 +61,7 @@ function init(error, data) {
 
   d3.select('#region-field').property('value', G.fieldName['region']);
   d3.select('#time-field').property('value', G.fieldName['time']);
+  d3.selectAll('.editable').on('focus', fieldInputFocused);
 
   G.sample = { region: Object.keys(G.region)[0] };
   G.sample.time = Object.keys(G.region[G.sample.region])[0];
@@ -73,6 +75,7 @@ function init(error, data) {
     .enter()
     .append('button')
     .attr('class', 'pure-secondary')
+    .on('click', pasteFieldName)
     .text(function(d) { return d; });
 
   G.timeSlider = d3.slider().axis(true).min(2003).max(2014)
@@ -113,6 +116,22 @@ function init(error, data) {
   canvas.append('g').attr('id', 'yAxis');
 
   recalc();
+}
+
+function fieldInputFocused() {
+  if (G.lastFocus) {
+    G.lastFocus.classed('pure-success', false);
+  }
+  G.lastFocus = d3.select(this);
+  G.lastFocus.classed('pure-success', true);
+}
+
+function pasteFieldName(fieldName) {
+  if (! G.lastFocus) { return; }
+  var id = G.lastFocus.attr('id');
+  const fields = ['xAxis-field', 'yAxis-field', 'width-field'];
+  if (fields.indexOf(id) < 0) { return; }
+  G.lastFocus.property('value', fieldName)
 }
 
 function recalc() {
