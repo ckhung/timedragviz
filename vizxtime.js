@@ -29,9 +29,9 @@ queue()
   .awaitAll(init);
 
 function organizeData(data) {
-  G.fieldName = data[0].startval.fieldName;
+  G.config = data[0];
   // field name for "region", field name for "time"
-  var regionFN = G.fieldName['region'], timeFN = G.fieldName['time'];
+  var regionFN = G.config.dimExpr['region'], timeFN = G.config.dimExpr['time'];
 
   // initialize G.joined from the data file
   data[2].forEach(function (d) {
@@ -62,7 +62,7 @@ function init(error, data) {
   console.log(G);
 
   ['region', 'time'].concat(Object.keys(G.exprFields)).forEach(function(k) {
-    d3.select('#'+k+'-field').property('value', G.fieldName[k]);
+    d3.select('#'+k+'-field').property('value', G.config.dimExpr[k]);
   });
   d3.selectAll('.editable').on('focus', fieldInputFocused);
   d3.select('#recalc').on('click', recalcRedraw);
@@ -72,7 +72,7 @@ function init(error, data) {
   G.sample.data = G.joined[G.sample.region][G.sample.time];
 
   G.dataFieldNames = Object.keys(G.sample.data).filter(function (d) {
-    return d != G.fieldName['region'] && d != G.fieldName['time'];
+    return d != G.config.dimExpr['region'] && d != G.config.dimExpr['time'];
   }).sort();
 
   var k;
@@ -143,6 +143,7 @@ function pasteFieldName(fieldName) {
     fieldName +
     s.substring(f.property('selectionEnd'), s.length)
   );
+  G.lastFocus.node().focus();
 }
 
 function recalcRedraw() {
@@ -178,7 +179,7 @@ function recalcRedraw() {
 	  if (v < G.domain[field].min) { G.domain[field].min = v; }
 	  G.evaluated[region][time][field] = v;
 	} catch(e) {
-	  console.log(time,region,field,e);
+	  console.log('Failed evaluating "' + field + '" field for ' + time + ',' + region + '\n' + e.toString());
 	}
       }
     }
@@ -189,6 +190,10 @@ function recalcRedraw() {
   circles.exit().remove();
   circles.enter()
     .append('circle')
+    .attr('cx', G.viewBox.width/2)
+    .attr('cy', G.viewBox.height/2)
+    .attr('r', 10)
+    .style('fill', '#fff')
     .classed('region', true)
     .append('svg:title')
     .classed('tooltip', true);
@@ -226,19 +231,19 @@ function redraw() {
   var now = G.timeSlider.value();
   G.canvas.selectAll('.region')
     .transition()
+    .duration(1000)
     .attr('cx', function(d) { return G.scale.xAxis(d.value[now].xAxis); })
     .attr('cy', function(d) { return G.scale.yAxis(d.value[now].yAxis); })
     .attr('r', function(d) { return G.scale.width(d.value[now].width/2); })
-    .style('fill', function(d) { return G.joined[d.key][now][G.fieldName['color']]; })
+    .style('fill', function(d) { return G.joined[d.key][now][G.config.dimExpr['color']]; })
     .style('fill-opacity', 0.4)
     .select('.tooltip')
     .text(function(d) {
       var n = d.value[now];
-      var msg =
-	G.fieldName['region'] + ':' + n[G.fieldName['region']] + '\n' +
-	G.fieldName['xAxis'] + '(x):' + n[G.fieldName['xAxis']] + '\n' +
-	G.fieldName['yAxis'] + '(y):' + n[G.fieldName['yAxis']] + '\n' +
-	G.fieldName['width'] + '(w):' + n[G.fieldName['width']];
+      var msg = d.key + '\n' +
+	'x:' + n.xAxis + '\n' +
+	'y:' + n.yAxis + '\n' +
+	'w:' + n.width;
       return msg;
     });
 }
