@@ -246,6 +246,10 @@ function recalcRedraw() {
   G.canvas.select('#yAxis')
     .attr('transform', 'translate(40,0)')
     .call(yAxis);
+  // https://stackoverflow.com/questions/27367849/how-to-rotate-and-change-font-size-on-x-axis
+  G.canvas.select('#xAxis')
+    .selectAll("text")
+    .attr("transform"," translate(0,30) rotate(60)");
 
   redraw();
 }
