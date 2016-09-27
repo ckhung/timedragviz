@@ -265,7 +265,10 @@ function redraw() {
     .attr('cy', function(d) { return G.scale.yAxis(d.value[now].yAxis); })
     .attr('r', function(d) { return G.scale.width(d.value[now].width/2); })
     .style('fill', function(d) { return G.joined[d.key][now][G.config.dimExpr['color']]; })
-    .style('fill-opacity', 0.4)
+    .style('fill-opacity', function(d) {
+      d = d.value[now];
+      return isNaN(d.xAxis) || isNaN(d.yAxis) || isNaN(d.width) ? 0 : 0.4;
+    })
     .select('.tooltip')
     .text(function(d) {
       var n = d.value[now];
