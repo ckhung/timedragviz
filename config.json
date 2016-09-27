@@ -3,9 +3,9 @@
   "dimExpr": {
     "region": "地區",
     "time": "年度",
-    "xAxis": "消防人員數",
-    "yAxis": "消防車輛數",
-    "width": "sqrt(死亡人數+火災受傷人數)",
+    "xAxis": "人力資源:失業率",
+    "yAxis": "社會治安:暴力犯罪發生數",
+    "width": "sqrt(人口:戶籍:人口數)",
     "color": "顏色"
   }
 }

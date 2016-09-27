@@ -15,6 +15,7 @@ var G = {
   domain: {},
   scale: {},
   dataFieldNames: [],
+  fnTree: {},
   sample: {},
   parsedSample: {},
   exprFields: { xAxis:null, yAxis:null, width:null }
@@ -80,14 +81,15 @@ function init(error, data) {
     G.parsedSample['VxT' + G.dataFieldNames.indexOf(k)] = G.sample.data[k];
   }
 
-  d3.select('#data-field-names')
-    .selectAll('button')
-    .data(G.dataFieldNames)
-    .enter()
-    .append('button')
-    .attr('class', 'pure-secondary')
-    .on('click', pasteFieldName)
-    .text(function(d) { return d; });
+  G.dataFieldNames.forEach(function (fn) {
+    var par = G.fnTree;
+    fn.split(':').forEach(function (seg) {
+      if (! (seg in par)) { par[seg] = {}; }
+      par = par[seg];
+    });
+  });
+
+  d3.select('#data-field-names').html(genNestedList(G.fnTree));
 
   G.timeSlider = d3.slider().axis(true).min(2003).max(2014)
     .step(1).value(2014).on('slide', toTime);
@@ -103,7 +105,7 @@ function init(error, data) {
 
   // http://bl.ocks.org/cpdean/7a71e687dd5a80f6fd57
   // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js (responsive svg)
-  d3.select('#viz-pane')
+  d3.select('#rsvg-box')
     .append('svg')
     .attr('preserveAspectRatio', 'xMinYMin meet')
     .attr('viewBox', '0 0 800 600')
@@ -113,7 +115,7 @@ function init(error, data) {
     .attr('id', 'viz-canvas');
   G.canvas = d3.select('#viz-canvas');
 
-  var VB = d3.select('#viz-pane svg')
+  var VB = d3.select('#rsvg-box svg')
     .attr('viewBox').split(' ').map(parseFloat);
   G.viewBox = { width: VB[2], height: VB[3] };
 
@@ -121,6 +123,23 @@ function init(error, data) {
   G.canvas.append('g').attr('id', 'yAxis');
 
   recalcRedraw();
+}
+
+function genNestedList(fnTree, level) {
+  if (! level) { level = 0; }
+  var prefix = '  '.repeat(level), r = prefix + '<ul class="menu-tree">\n';
+  Object.keys(fnTree).sort().forEach(function f(n) {
+    r += prefix + '<li class="fn-segment">';
+    if (fnTree[n] && typeof fnTree[n] === 'object' &&
+      Object.keys(fnTree[n]).length > 0) {
+      r += '<button class="pure-button pure-secondary fn-segment">' + n +
+	'</button>' + genNestedList(fnTree[n], level+1);
+    } else {
+      r += '<button class="pure-button pure-primary fn-segment" onclick="pasteFieldName(this)">' + n + '</button>';
+    }
+    r += '</li>\n';
+  });
+  return r + prefix + '</ul>';
 }
 
 function fieldInputFocused() {
@@ -131,11 +150,21 @@ function fieldInputFocused() {
   G.lastFocus.classed('active', true);
 }
 
-function pasteFieldName(fieldName) {
+function pasteFieldName(me) {
   if (! G.lastFocus) { return; }
   var id = G.lastFocus.attr('id');
   const fields = ['xAxis-field', 'yAxis-field', 'width-field'];
   if (fields.indexOf(id) < 0) { return; }
+  var li, i, fieldName = d3.select(me).text();
+  me = me.parentNode;
+  for (i=0; i<9; ++i) {
+    me = me.parentNode.parentNode;
+    li = d3.select(me);
+    b = li.select('button.fn-segment');
+    if (! (li.classed('fn-segment') && b)) { break; }
+    fieldName = b.text() + ':' + fieldName;
+  }
+  console.log(fieldName);
   var f = G.lastFocus;
   var s = f.property('value');
   f.property('value',
@@ -151,8 +180,8 @@ function recalcRedraw() {
   for (field in G.exprFields) {
     G.domain[field] = { max: -9e99, min: 9e99 };
     expr = d3.select('#'+field+'-field').property('value');
-    G.dataFieldNames.forEach(function (f, i) {
-      expr = expr.replace(f, 'VxT'+i);
+    G.dataFieldNames.forEach(function (fn, i) {
+      expr = expr.replace(fn, 'VxT'+i);
     });
     // http://javascript.info/tutorial/exceptions
     try {

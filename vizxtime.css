@@ -71,3 +71,56 @@ body {
     background: rgb(66, 184, 221); /* this is a light blue */
 }
 
+/* the following is mostly based on http://htmldog.com/techniques/dropdowns/ */
+
+#viz-pane {
+    position: relative;
+    /* so that it is in the same "stacking context" as #info-pane.
+    https://philipwalton.com/articles/what-no-one-told-you-about-z-index/ */
+    z-index: -1;
+}
+
+#info-pane { /* z-index: 1; this is not necessary */ }
+
+#data-field-names { padding: 2px; }
+
+ul.menu-tree { list-style: none; }
+
+#data-field-names > ul.menu-tree {
+    position: relative;
+    /* To make its absolute children placed relative to
+    the tree root element, the tree root element must not be "static" 
+    http://zh-tw.learnlayout.com/position.html */
+    margin: 0;
+    padding: 0;
+}
+
+ul.menu-tree ul {
+    position: absolute;
+    display: none;
+    top: 0px;
+    left: 60px;
+}
+
+ul.menu-tree li {
+    float: none;
+    padding: 2px;
+}
+
+ul.menu-tree li:hover > button {
+    background: rgb(0, 120, 231);
+}
+
+ul.menu-tree li:hover > ul {
+    display: block;
+}
+
+ul.menu-tree button.fn-segment {
+    border: 1px solid #000;
+    padding: 2px;
+}
+
+ul.menu-tree button {
+    border: 1px solid #000;
+}
+
