@@ -1,5 +1,5 @@
 /* jshint esversion: 6, loopfunc: true */
-/* global console, alert, Parser, d3, queue */
+/* global console, alert, Parser, d3, queue, Blob, saveAs */
 
 var G = {
   filename: {
@@ -70,7 +70,6 @@ function init(error, data) {
     d3.select('#'+k+'-field').property('value', G.config.dimExpr[k]);
   });
   d3.selectAll('.editable').on('focus', fieldInputFocused);
-  d3.select('#recalc').on('click', recalcRedraw);
 
   G.sample.region = Object.keys(G.joined)[0];
   G.sample.time = Object.keys(G.joined[G.sample.region])[0];
@@ -113,6 +112,8 @@ function init(error, data) {
     .append('svg')
     .attr('preserveAspectRatio', 'xMinYMin meet')
     .attr('viewBox', '0 0 800 600')
+    .attr('version', 1.1)
+    .attr('xmlns', 'http://www.w3.org/2000/svg')
     .classed('rsvg-content', true)
     .call(gpzoom)
     .append('g')
@@ -180,10 +181,10 @@ function pasteFieldName(me) {
 }
 
 function recalcRedraw() {
-  var expr, field, region, time, k;
+  var rawExpr, expr, field, region, time, k;
   for (field in G.exprFields) {
     G.domain[field] = { max: -9e99, min: 9e99 };
-    expr = d3.select('#'+field+'-field').property('value');
+    rawExpr = expr = d3.select('#'+field+'-field').property('value');
     G.dataFieldNames.forEach(function (fn, i) {
       expr = expr.replace(fn, 'VxT'+i);
     });
@@ -196,6 +197,7 @@ function recalcRedraw() {
       alert('Failed parsing "' + field + '" field:\n[ ' + expr + ' ]\n' + e.toString());
       return;
     }
+    G.config.dimExpr[field] = rawExpr;
   }
 
   for (region in G.joined) {
@@ -299,5 +301,25 @@ function merge(dst, xtra) {
   Object.keys(xtra).forEach(function (x) {
     dst[x] = xtra[x];
   });
+}
+
+function saveConfig() {
+  // http://www.javascripture.com/Blob
+  var blob = new Blob(
+    [JSON.stringify(G.config, null, 2)],
+    {type: 'application/json', endings: 'native'}
+  );
+  saveAs(blob, 'config.json');
+}
+
+function saveDrawing() {
+  // http://techslides.com/save-svg-as-an-image
+  var blob = new Blob(
+    [d3.select(
+      d3.select('#rsvg-box svg').node().parentNode
+    ).html()],
+    {type: 'image/svg+xml', endings: 'native'}
+  );
+  saveAs(blob, 'vizxtime.svg');
 }
 

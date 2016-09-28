@@ -18,9 +18,25 @@
 
 <body>
   <div id="content" class="pure-g">
+    <div class="pure-u-1-4">
+      <div class="l-padding">
+        <h1><a href="https://ckhung.github.io/vizxtime/">VizXTime</a></h1>
+      </div>
+    </div>
+
+    <div class="pure-u-3-4" style="padding-top: 3em" >
+        <div class="pure-g">
+          <div class="pure-u-1-12"></div>
+          <div class="pure-u-17-24" id="time-slider"></div>
+          <div class="pure-u-1-12"></div>
+          <div class="pure-u-1-12">
+            <span id="time-text"></span>
+          </div>
+        </div>
+    </div>
+
     <div id="info-pane" class="pure-u-1-4">
       <div class="l-padding">
-        <h1>VizXTime</h1>
 
         <form class="pure-form pure-g">
           <div class="s-padding">
@@ -67,10 +83,12 @@
           </div>
 
           <div class="s-padding">
-            <div class="pure-u-1-4"></div>
             <!-- http://stackoverflow.com/questions/19454310/stop-form-refreshing-page-on-submit -->
-            <button type="button" id="recalc" class="pure-button pure-button-primary pure-u-1-2" >重算!</button>
-            <div class="pure-u-1-4"></div>
+            <button type="button" id="save-svg" onclick="saveDrawing()" class="pure-button pure-primary pure-u-1-4" >存圖</button>
+            <div class="pure-u-1-8"></div>
+            <button type="button" id="save-expr" onclick="saveConfig()" class="pure-button pure-primary pure-u-1-4" >存算式</button>
+            <div class="pure-u-1-8"></div>
+            <button type="button" id="recalc" onclick="recalcRedraw()" class="pure-button pure-primary pure-u-1-4" >重算</button>
           </div>
         </form>
 
@@ -82,17 +100,10 @@
     <div id="viz-pane" class="pure-u-3-4">
       <div class="l-padding">
         <div class="rsvg-container pure-u-1-1" id="rsvg-box"></div>
-        <div class="pure-g">
-          <div class="pure-u-1-12"></div>
-          <div class="pure-u-17-24" id="time-slider"></div>
-          <div class="pure-u-1-12"></div>
-          <div class="pure-u-1-12">
-            <span id="time-text"></span>
-          </div>
-        </div>
       </div>
     </div>
   </div><!-- #content .pure-g -->
+  <script type="text/javascript" src="FileSaver.js"> </script>
   <script type="text/javascript" src="parser.js"> </script>
   <script type="text/javascript" src="d3.js"> </script>
   <script type="text/javascript" src="d3.slider.js"> </script>
