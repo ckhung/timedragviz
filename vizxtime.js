@@ -7,18 +7,22 @@ var G = {
     regions: 'regions.csv',
     data: 'data.csv'
   },
-  viewBox: {},
-  regions: {},
-  joined: {},
-  evaluated: {},
-  lastFocus: null,
-  domain: {},
-  scale: {},
-  dataFieldNames: [],
-  fnTree: {},
-  sample: {},
-  parsedSample: {},
+  viewBox: {},		// width and height of viewBox of #rsvg-box
+  regions: {},		// original data read from filename.regions
+  joined: {},		// main data structure (joining regions and data)
+  evaluated: {},	// re-evaluated in recalcRedraw() after each change of expressions
+  lastFocus: null,	// the html input element that most recently received input focus
+  domain: {},		// min and max of xAxis, yAxis, and width
+  scale: {},		// the scale objects for xAxis, yAxis, and width
+  dataFieldNames: [],	// field names usable in expressions
+  fnTree: {},		// field name tree for constructing the nested menu
+  sample: {},		// one row of sample data
+  parsedSample: {},	// values of var's in sample data
+  xtraFun: {		// extra functions for the (expression) Parser.
+    'ZaBin': XFZaBin,
+  },
   exprFields: { xAxis:null, yAxis:null, width:null }
+			// expressions for xAxis, yAxis, and width
 }; // global variables
 
 d3.select('#region-file').text(G.filename.regions);
@@ -155,14 +159,14 @@ function pasteFieldName(me) {
   var id = G.lastFocus.attr('id');
   const fields = ['xAxis-field', 'yAxis-field', 'width-field'];
   if (fields.indexOf(id) < 0) { return; }
-  var li, i, fieldName = d3.select(me).text();
+  var li, i, btn, fieldName = d3.select(me).text();
   me = me.parentNode;
   for (i=0; i<9; ++i) {
     me = me.parentNode.parentNode;
     li = d3.select(me);
-    b = li.select('button.fn-segment');
-    if (! (li.classed('fn-segment') && b)) { break; }
-    fieldName = b.text() + ':' + fieldName;
+    btn = li.select('button.fn-segment');
+    if (! (li.classed('fn-segment') && btn)) { break; }
+    fieldName = btn.text() + ':' + fieldName;
   }
   console.log(fieldName);
   var f = G.lastFocus;
@@ -186,6 +190,7 @@ function recalcRedraw() {
     // http://javascript.info/tutorial/exceptions
     try {
       G.exprFields[field] = Parser.parse(expr);
+      merge(G.exprFields[field].functions, G.xtraFun);
       G.exprFields[field].evaluate(G.parsedSample);
     } catch(e) {
       alert('Failed parsing "' + field + '" field:\n[ ' + expr + ' ]\n' + e.toString());
@@ -248,8 +253,8 @@ function recalcRedraw() {
     .call(yAxis);
   // https://stackoverflow.com/questions/27367849/how-to-rotate-and-change-font-size-on-x-axis
   G.canvas.select('#xAxis')
-    .selectAll("text")
-    .attr("transform"," translate(0,30) rotate(60)");
+    .selectAll('text')
+    .attr('transform',' translate(0,30) rotate(60)');
 
   redraw();
 }
@@ -284,4 +289,15 @@ function redraw() {
     });
 }
 
-  // http://stackoverflow.com/questions/9589768/using-an-associative-array-as-data-for-d3
+function XFZaBin(p, N, mu) {
+  // Normal approximation to Binomial
+  // https://onlinecourses.science.psu.edu/stat414/node/179
+  return (p-mu) / Math.sqrt(mu*(1-mu)/N);
+}
+
+function merge(dst, xtra) {
+  Object.keys(xtra).forEach(function (x) {
+    dst[x] = xtra[x];
+  });
+}
+
