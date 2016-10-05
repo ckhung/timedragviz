@@ -1,12 +1,7 @@
 /* jshint esversion: 6, loopfunc: true */
-/* global console, alert, d3, $, Parser, queue, Blob, saveAs */
+/* global console, alert, location, d3, $, Parser, queue, Blob, saveAs */
 
 var G = {
-  filename: {
-    config: 'config.json',
-    regions: 'regions.csv',
-    data: 'data.csv'
-  },
   viewBox: {},		// width and height of viewBox of #rsvg-box
   regions: {},		// original data read from filename.regions
   joined: {},		// main data structure (joining regions and data)
@@ -25,21 +20,28 @@ var G = {
 			// expressions for xAxis, yAxis, and width
 }; // global variables
 
-d3.select('#region-file').text(G.filename.regions);
-d3.select('#data-file').text(G.filename.data);
-queue()
-  .defer(d3.json, G.filename.config)
-  .defer(d3.csv, G.filename.regions)
-  .defer(d3.csv, G.filename.data)
-  .awaitAll(init);
+var configFN = $.url(location.href).param('config');
+if (! configFN) { configFN = 'config.json'; }
+$.getJSON(configFN)
+  .done(function(data) {
+    G.config = data;
+    queue()
+      .defer(d3.csv, G.config.filename.regions)
+      .defer(d3.csv, G.config.filename.data)
+      .awaitAll(init);
+  })
+  .fail(function( jqxhr, textStatus, error ) {
+    var msg = 'failed reading config file "' + configFN + '"';
+    alert(msg);
+    throw new Error(msg);
+  });
 
 function organizeData(data) {
-  G.config = data[0];
   // field name for "region", field name for "time"
   var regionFN = G.config.dimExpr['region'], timeFN = G.config.dimExpr['time'];
 
   // initialize G.joined from the data file
-  data[2].forEach(function (d) {
+  data[1].forEach(function (d) {
     if (! (d[regionFN] in G.joined)) {
       G.joined[d[regionFN]] = {};
     }
@@ -48,7 +50,7 @@ function organizeData(data) {
 
   // join the regions file into G.joined
   var region, time, k;
-  data[1].forEach(function (d) {
+  data[0].forEach(function (d) {
     region = d[regionFN];
     for (time in G.joined[region]) {
       for (k in d) {
@@ -56,7 +58,7 @@ function organizeData(data) {
       }
     }
   });
-  G.regions = data[1].map(function (d) { return d[regionFN]; });
+  G.regions = data[0].map(function (d) { return d[regionFN]; });
 }
 
 function init(error, data) {
@@ -66,6 +68,8 @@ function init(error, data) {
   organizeData(data);
   console.log(G);
 
+  d3.select('#region-file').text(G.config.filename.regions);
+  d3.select('#data-file').text(G.config.filename.data);
   ['region', 'time'].concat(Object.keys(G.exprFields)).forEach(function(k) {
     d3.select('#'+k+'-field').property('value', G.config.dimExpr[k]);
   });

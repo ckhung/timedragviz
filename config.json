@@ -1,5 +1,8 @@
 {
-  "transition": 1000,
+  "filename": {
+    "regions": "regions.csv",
+    "data": "data.csv"
+  },
   "dimExpr": {
     "region": "地區",
     "time": "年度",
@@ -8,6 +11,7 @@
     "width": "sqrt(人口:戶籍:人口數)",
     "color": "顏色"
   },
+  "transition": 1000,
   "width": {
     "min": 10,
     "max": 80
