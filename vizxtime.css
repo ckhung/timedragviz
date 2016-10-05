@@ -10,17 +10,17 @@ body {
 .rsvg-container {
     display: inline-block;
     position: relative;
-    width: 100%;
-    padding-bottom: 80%; /* aspect ratio */
     vertical-align: top;
     overflow: hidden;
     background: #ffe;
+    /* more declarations in html */
 }
 
-.rsvg-content {
+#rsvg-box svg {
     display: inline-block;
     position: absolute;
-    background: '#fdd';
+    /* border: 3px solid #808; */
+    bottom-padding: 0px;
 }
 
 /* http://purecss.io/grids/ */
@@ -92,5 +92,10 @@ ul.menu-tree { list-style: none; }
 
 #data-field-names li {
     border: 1px solid #ccc;
+}
+
+#xAxis text {
+    /* https://stackoverflow.com/questions/27367849/how-to-rotate-and-change-font-size-on-x-axis */
+    transform: translate(0px, 30px) rotate(60deg);
 }
 

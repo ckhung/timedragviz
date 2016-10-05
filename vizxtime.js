@@ -113,13 +113,7 @@ function init(error, data) {
 
   // http://bl.ocks.org/cpdean/7a71e687dd5a80f6fd57
   // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js (responsive svg)
-  d3.select('#rsvg-box')
-    .append('svg')
-    .attr('preserveAspectRatio', 'xMinYMin meet')
-    .attr('viewBox', '0 0 800 600')
-    .attr('version', 1.1)
-    .attr('xmlns', 'http://www.w3.org/2000/svg')
-    .classed('rsvg-content', true)
+  d3.select('#rsvg-box svg')
     .call(gpzoom)
     .append('g')
     .attr('id', 'viz-canvas');
@@ -236,7 +230,7 @@ function recalcRedraw() {
     .range([G.viewBox.height * 0.8, G.viewBox.height * 0.2])
     .domain([G.domain.yAxis.min, G.domain.yAxis.max]);
   G.scale.width = d3.scale.linear()
-    .range([5, G.viewBox.width/20])
+    .range([G.config.width.min, G.config.width.max])
     .domain([G.domain.width.min, G.domain.width.max]);
   var xAxis, yAxis;
   xAxis = d3.svg.axis().scale(G.scale.xAxis).orient('top');
@@ -247,10 +241,9 @@ function recalcRedraw() {
   G.canvas.select('#yAxis')
     .attr('transform', 'translate(40,0)')
     .call(yAxis);
-  // https://stackoverflow.com/questions/27367849/how-to-rotate-and-change-font-size-on-x-axis
   G.canvas.select('#xAxis')
     .selectAll('text')
-    .attr('transform',' translate(0,30) rotate(60)');
+    .attr('transform',' ');
 
   redraw();
 }

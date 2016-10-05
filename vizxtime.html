@@ -100,7 +100,15 @@
 
     <div id="viz-pane" class="pure-u-3-4">
       <div class="l-padding">
-        <div class="rsvg-container pure-u-1-1" id="rsvg-box"></div>
+	<!--  https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js -->
+        <div class="rsvg-container pure-u-1-1" id="rsvg-box"
+	  style="width: 100%; padding-bottom: 75%;">
+	  <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+	    preserveAspectRatio="xMinYMin meet"
+	    viewBox="0 0 800 600" >
+	    <!-- #rsvg-box and its inner svg must have same aspect ratio -->
+	  </svg>
+	</div>
       </div>
     </div>
   </div><!-- #content .pure-g -->
