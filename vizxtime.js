@@ -1,5 +1,5 @@
 /* jshint esversion: 6, loopfunc: true */
-/* global console, alert, Parser, d3, queue, Blob, saveAs */
+/* global console, alert, d3, $, Parser, queue, Blob, saveAs */
 
 var G = {
   filename: {
@@ -69,7 +69,11 @@ function init(error, data) {
   ['region', 'time'].concat(Object.keys(G.exprFields)).forEach(function(k) {
     d3.select('#'+k+'-field').property('value', G.config.dimExpr[k]);
   });
-  d3.selectAll('.editable').on('focus', fieldInputFocused);
+  $('.editable').focus(function () {
+    if (G.lastFocus) { G.lastFocus.removeClass('active'); }
+    G.lastFocus = $(this);
+    G.lastFocus.addClass('active');
+  });
 
   G.sample.region = Object.keys(G.joined)[0];
   G.sample.time = Object.keys(G.joined[G.sample.region])[0];
@@ -92,7 +96,8 @@ function init(error, data) {
     });
   });
 
-  d3.select('#data-field-names').html(genNestedList(G.fnTree));
+  $('#data-field-names').html(genNestedList(G.fnTree));
+  $('#data-field-names > ul').attr('id', 'fn-menu').menu();
 
   G.timeSlider = d3.slider().axis(true).min(2003).max(2014)
     .step(1).value(2014).on('slide', toTime);
@@ -132,52 +137,41 @@ function init(error, data) {
 
 function genNestedList(fnTree, level) {
   if (! level) { level = 0; }
-  var prefix = '  '.repeat(level), r = prefix + '<ul class="menu-tree">\n';
+  var prefix = '  '.repeat(level), r = prefix + '<ul>\n';
   Object.keys(fnTree).sort().forEach(function f(n) {
     r += prefix + '<li class="fn-segment">';
     if (fnTree[n] && typeof fnTree[n] === 'object' &&
       Object.keys(fnTree[n]).length > 0) {
-      r += '<button class="pure-button pure-secondary fn-segment">' + n +
-	'</button>' + genNestedList(fnTree[n], level+1);
+      r += '<div class="fn-segment">' + n +
+	'</div>' + genNestedList(fnTree[n], level+1);
     } else {
-      r += '<button class="pure-button pure-primary fn-segment" onclick="pasteFieldName(this)">' + n + '</button>';
+      r += '<div class="fn-segment" onclick="pasteFieldName(this)">' + n + '</div>';
     }
     r += '</li>\n';
   });
   return r + prefix + '</ul>';
 }
 
-function fieldInputFocused() {
-  if (G.lastFocus) {
-    G.lastFocus.classed('active', false);
-  }
-  G.lastFocus = d3.select(this);
-  G.lastFocus.classed('active', true);
-}
-
-function pasteFieldName(me) {
+function pasteFieldName(div) {
   if (! G.lastFocus) { return; }
-  var id = G.lastFocus.attr('id');
   const fields = ['xAxis-field', 'yAxis-field', 'width-field'];
-  if (fields.indexOf(id) < 0) { return; }
-  var li, i, btn, fieldName = d3.select(me).text();
-  me = me.parentNode;
-  for (i=0; i<9; ++i) {
-    me = me.parentNode.parentNode;
-    li = d3.select(me);
-    btn = li.select('button.fn-segment');
-    if (! (li.classed('fn-segment') && btn)) { break; }
-    fieldName = btn.text() + ':' + fieldName;
-  }
+  if (fields.indexOf(G.lastFocus.attr('id')) < 0) { return; }
+  div = $(div);
+  var fieldName = div.text();
+  do {
+    div = div.parent('li').parent('ul').parent('li').children('div');
+    if (div.length < 1) { break; }
+    fieldName = div.text() + ':' + fieldName;
+  } while (1);
   console.log(fieldName);
   var f = G.lastFocus;
-  var s = f.property('value');
-  f.property('value',
-    s.substring(0,f.property('selectionStart')) +
+  var s = f.val();
+  f.val(
+    s.substring(0,f.prop('selectionStart')) +
     fieldName +
-    s.substring(f.property('selectionEnd'), s.length)
+    s.substring(f.prop('selectionEnd'), s.length)
   );
-  G.lastFocus.node().focus();
+  G.lastFocus.focus();
 }
 
 function recalcRedraw() {
@@ -315,9 +309,7 @@ function saveConfig() {
 function saveDrawing() {
   // http://techslides.com/save-svg-as-an-image
   var blob = new Blob(
-    [d3.select(
-      d3.select('#rsvg-box svg').node().parentNode
-    ).html()],
+    [$('#rsvg-box svg').parent().html()],
     {type: 'image/svg+xml', endings: 'native'}
   );
   saveAs(blob, 'vizxtime.svg');

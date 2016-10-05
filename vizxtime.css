@@ -86,41 +86,11 @@ body {
 
 ul.menu-tree { list-style: none; }
 
-#data-field-names > ul.menu-tree {
-    position: relative;
-    /* To make its absolute children placed relative to
-    the tree root element, the tree root element must not be "static" 
-    http://zh-tw.learnlayout.com/position.html */
-    margin: 0;
-    padding: 0;
+#data-field-names ul {
+    width: 200px;
 }
 
-ul.menu-tree ul {
-    position: relative;
-    display: none;
-    top: 0px;
-    left: 40px;
-}
-
-ul.menu-tree li {
-    float: none;
-    padding: 2px;
-}
-
-ul.menu-tree li:hover > button {
-    background: rgb(0, 120, 231);
-}
-
-ul.menu-tree li:hover > ul {
-    display: block;
-}
-
-ul.menu-tree button.fn-segment {
-    border: 1px solid #000;
-    padding: 2px;
-}
-
-ul.menu-tree button {
-    border: 1px solid #000;
+#data-field-names li {
+    border: 1px solid #ccc;
 }
 

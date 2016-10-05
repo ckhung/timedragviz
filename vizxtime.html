@@ -10,6 +10,7 @@
   "width=device-width, initial-scale=1" />
 
   <title>VizXTime</title>
+  <link type="text/css" rel="stylesheet" href="jqui/jquery-ui.min.css">
   <link type="text/css" rel="stylesheet" href="pure-min.css" />
   <link type="text/css" rel="stylesheet" href="grids-responsive-min.css" />
   <link type="text/css" rel="stylesheet" href="d3.slider.css" />
@@ -84,11 +85,11 @@
 
           <div class="s-padding">
             <!-- http://stackoverflow.com/questions/19454310/stop-form-refreshing-page-on-submit -->
-            <button type="button" id="save-svg" onclick="saveDrawing()" class="pure-button pure-primary pure-u-1-4" >存圖</button>
+            <button type="button" id="save-svg" onclick="saveDrawing()" class="pure-button pure-primary pure-u-1-4" title="save svg">svg</button>
             <div class="pure-u-1-8"></div>
-            <button type="button" id="save-expr" onclick="saveConfig()" class="pure-button pure-primary pure-u-1-4" >存算式</button>
+            <button type="button" id="save-expr" onclick="saveConfig()" class="pure-button pure-primary pure-u-1-4" title="save config">config</button>
             <div class="pure-u-1-8"></div>
-            <button type="button" id="recalc" onclick="recalcRedraw()" class="pure-button pure-primary pure-u-1-4" >重算</button>
+            <button type="button" id="recalc" onclick="recalcRedraw()" class="pure-button pure-primary pure-u-1-4" title="re-calculate">recalc</button>
           </div>
         </form>
 
@@ -103,6 +104,8 @@
       </div>
     </div>
   </div><!-- #content .pure-g -->
+  <script src="jqui/external/jquery/jquery.js"></script>
+  <script src="jqui/jquery-ui.min.js"></script>
   <script type="text/javascript" src="FileSaver.js"> </script>
   <script type="text/javascript" src="parser.js"> </script>
   <script type="text/javascript" src="d3.js"> </script>
