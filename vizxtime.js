@@ -103,10 +103,16 @@ function init(error, data) {
   $('#data-field-names').html(genNestedList(G.fnTree));
   $('#data-field-names > ul').attr('id', 'fn-menu').menu();
 
-  G.timeSlider = d3.slider().axis(true).min(2003).max(2014)
-    .step(1).value(2014).on('slide', toTime);
+  var getTimeField = function (d) {
+    return d[G.config.dimExpr['time']];
+  };
+  var mn = d3.min(data[1], getTimeField),
+      mx = d3.max(data[1], getTimeField);
+
+  G.timeSlider = d3.slider().axis(true).min(mn).max(mx)
+    .step(1).value(mx).on('slide', toTime);
   d3.select('#time-slider').call(G.timeSlider);
-  d3.select('#time-text').text(2014);
+  d3.select('#time-text').text(mx);
 
   var gpzoom = d3.behavior.zoom()
     .scaleExtent([0.2, 8])
