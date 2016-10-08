@@ -93,6 +93,8 @@ function init(error, data) {
   // same prefix, longer names appear earlier.
   // e.g. "abc:pqr:xyz" appears earlier than "abc:pqr",
   // which appears earlier than "abc"
+  // Thus more specific names are substituted first
+  // in variable substitutions
 
   fnlist.forEach(function (fn, i) {
     G.fn2Var[fn] = 'VxT' + i;

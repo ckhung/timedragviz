@@ -22,11 +22,199 @@
       <h3>
 <a id="vizxtime" class="anchor" href="#vizxtime" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>vizxtime</h3>
 
-<p>Viz 'cross Time lets you visualize data with a time field
-by "scrolling/dragging" across the time dimension.
+<p>Viz 'cross Time is an online/offline scatter plot tool with
+an additional time axis. You feed it with
+two csv data files (for example, exported from LibreOffice calc
+or Microsoft excel), and specify (in a json format
+configuration file) which fields to use for the category names,
+x-axis, y-axis, width, color, and time axis,
+it then draws the scatter plot with a horizontal scale
+so that you can drag the scale and see
+how your plot changes across time.
 See <a href="vizxtime.html">demo</a>.</p>
 
-<img src="vizxtime.png" />
+<p><img src="vizxtime.jpg" /></p>
+
+<h4>1. Preparing the Data</h4>
+
+<p>In order to use vizxtime, you need to prepare three text files.
+In our example, these are the configuration file
+<code>config.json</code> and two data files
+<code>regions.csv</code> and <code>data.csv</code> .
+
+<p>We use curated open data released by the Taiwan government
+as our example. The data contains various statistics such
+as population, employment, budgets, etc. of all 22 counties of Taiwan
+from year 2003 to year 2015.
+
+<p>The "protagonists" on the scatter plot are big and small circles
+of various colors presenting the counties.
+These counties are referred to as "regions" in this document,
+in the configuration file, and in the source code.
+For a data set dealing with USA, for example, the regions might be states.
+For Canada, a region would be a province.
+And a region is a région in France :-)
+However, vizxtime is not limited to visualizing geographic data
+defined by political boundaries.
+If you are investigating the performance of various departments
+in your company, or health conditions of various ethnic groups
+on an island, then a "region" would be a department or an
+ethnic group in your case.
+"Categories" might have been a more generic name,
+but I feel it too abstract and less appealing
+to visual people,  and therefore decided
+to keep it as "regions".
+
+<p>Each row of <code>regions.csv</code>
+specifies the name of one region and the color
+of the circle representing the region in the scatter plot.
+It may contain additional fields that are <em>independent of time</em>
+such as the region's size (area).
+
+<p>Each row of <code>data.csv</code>
+specifies various statistics of one region at a particular time.
+In other words, the [region, time] combination is the
+primary key of this file. This is the main data file containing
+various parameters that you suspect to have hidden relations.
+For example, how do various kinds of pollutions correlate
+with various indices of public health?
+Each parameter will correspond to one column.
+
+<p>These two csv files can be located in the same directory as
+the downloaded vizxtime code. Or they can be located at some
+publicly accessible remote URL.
+Also note: in these two files, <em>extra spaces before
+or after each field name must be removed!</em>
+
+<p>In any case you specify the locations and names of these two csv files
+in the configuration file <code>config.json</code>.
+Vizxtime will then load the two csv files
+and "join" them on the region name field to produce the
+complete data set that you can explore.
+
+<p>The field names can be ascii or utf-8 strings.
+They <em>must not</em> contain white spaces, certain
+math function names (such as <code>sin</code>, <code>cos</code>,
+<code>tan</code>, <code>sqrt</code>, <code>log</code>)
+or characters used in math expressions such as +, -, *, /, (, ).
+In addition, they must not contain the substring of this format:
+<code>VxT<em>nn</em></code> (e.g. <code>VxT0</code>、
+<code>VxT25</code>) where <em>nn</em>
+are integers because internally field names
+are converted into variable names of this format.
+
+<p>The colon character (":") within a field name has a
+special meaning. It signifies segments within the name that
+determines its grouping with other names.
+For example, "population:male" and "population:female"
+will be grouped together, so will "income:tax" and
+"income:fine". There can be several colons within a
+field name. Field names that share the same longer
+prefix segments will be grouped more tightly together
+in the menu. In this way, field names are organized
+into a tree according to their similarities,
+much like files in a file system are organized
+into a directory tree. (E.g., /var/log/apache2/access.log
+and /var/log/apache2/error.log are displayed
+close together in the full directory listing of / .)
+
+<h4>2. The User Interface</h4>
+
+<p>Presently you can visualize three quantities
+simultaneously in the scatter plot --
+the x- and y-coordinates of the center of the circle,
+plus the width (diameter) of the circle.
+If people request, the code might be changed to
+draw ellipses instead of circles, thus enabling
+a fourth quantity corresponding to the height of the ellipse.
+
+<p>In the simplest case, you just choose one
+field name for each of the <code>xAxis</code>,
+<code>yAxis</code>, and <code>width</code> input fields.
+The field names can be typed in, or they can be
+chosen from the menu below, which is created from
+the field names of the joined table and organized
+into a nested menu tree according to their names
+(as segmented by the ":" character).
+
+<p>Then you press the "recalc" button to re-calculate
+the maximum and minimum values of various parameters
+and to re-draw the scatter plot.
+You can then drag the horizontal scale that represents time,
+and VIualiZe how the chosen parameters in your data change 'cross TIME.
+
+<p>You can go one step further by creating mathematical
+expressions out of one or more field names.
+For example, the area of the circle is proportional to
+the square of its radius/diameter.
+Thus if you would like the area to represent the <code>population</code>
+of a region, it makes more sense to use <code>sqrt(population)</code>
+as its width than the simple <code>population</code>.
+See <a href="https://silentmatt.com/javascript-expression-evaluator/">
+JavaScript Expression Evaluator</a> for the list
+of recognized math functions (and thus substring to be
+avoided in field names).
+
+<p>There is an additional function <code>ZaBin</code>
+that computes the normal approximation to the
+binomial distribution, useful for example
+in situations when one wants to emphasize
+the deviation of the male/(male+female) ratio from 0.5 .
+See the source code and <a href=
+"https://onlinecourses.science.psu.edu/stat414/node/179">
+Normal Approximation to Binomial</a> for more details.
+
+<p>When you are satisfied with a scatter plot,
+you can press the "svg" button for saving the current plot,
+or press the "config" button for saving the current
+mathematical expressions for the three fields.
+
+<h4>3. The Configuration File</h4>
+
+
+<p>The following values can be changed in the json-format
+configuration file:
+<ol>
+<li><code>filename.regions</code> local file name or
+remote url for the <em>time-independent</em> "regions" file.
+<li><code>filename.data</code> local file name or
+remote url for the main data file, whose primary key
+is the [region, time] combination.
+<li><code>dimExpr.region</code> the name of the field
+(column) to be interpreted as the names for the circles.
+<li><code>dimExpr.time</code> the name of the field
+(column) to be interpreted as the time axis.
+<li><code>dimExpr.xAxis</code> the mathematical expression
+(composed of field names and built-in functions) for
+the horizontal position of the circles.
+<li><code>dimExpr.yAxis</code> the mathematical expression
+(composed of field names and built-in functions) for
+the vertical position of the circles.
+<li><code>dimExpr.width</code> the mathematical expression
+(composed of field names and built-in functions) for
+the diameter of the circles.
+<li><code>dimExpr.color</code> the name of the field
+(column) that define the colors of the circles.
+<li><code>transition</code> the time for the transition effect,
+in milliseconds.
+<li><code>width.min</code> the diameter of the smallest circle.
+<li><code>width.max</code> the diameter of the largest circle.
+</ol>
+
+<p>In addition, you may specify the name or the URL
+of the configuration file by appending the "?config=URL"
+suffix to the URL of the vizxtime html page, like :
+<a href="file:///mnt/worksp/home/ckhung/git/vizxtime/vizxtime.html?config=https://raw.githubusercontent.com/ckhung/vizxtime/gh-pages/config.json">
+this</a>. Thus you can play with several sets of data
+(each composing of one configuration file plus two csv files)
+with a single copy of the vizxtime code.
+
+<h4>4. Error handling</h4>
+
+<ol>
+<li>Entries with missing parameters are made transparent
+(and thus disappear).
+</ol>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/ckhung/vizxtime">vizxtime</a> is maintained by <a href="https://github.com/ckhung">ckhung</a>.</span>
