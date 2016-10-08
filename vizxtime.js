@@ -9,7 +9,7 @@ var G = {
   lastFocus: null,	// the html input element that most recently received input focus
   domain: {},		// min and max of xAxis, yAxis, and width
   scale: {},		// the scale objects for xAxis, yAxis, and width
-  dataFieldNames: [],	// field names usable in expressions
+  fn2Var: [],		// [field name] to [variable name] hash
   fnTree: {},		// field name tree for constructing the nested menu
   sample: {},		// one row of sample data
   parsedSample: {},	// values of var's in sample data
@@ -83,22 +83,29 @@ function init(error, data) {
   G.sample.time = Object.keys(G.joined[G.sample.region])[0];
   G.sample.data = G.joined[G.sample.region][G.sample.time];
 
-  G.dataFieldNames = Object.keys(G.sample.data).filter(function (d) {
-    return d != G.config.dimExpr['region'] && d != G.config.dimExpr['time'];
-  }).sort();
+  var fnlist = Object.keys(G.sample.data).filter(function (d) {
+    return d != G.config.dimExpr['region'] &&
+      d != G.config.dimExpr['time'] &&
+      d != G.config.dimExpr['color'];
+  });
+  fnlist.sort(function(a,b) { return -a.localeCompare(b); } );
+  // reverse sort, so that of all field names sharing the
+  // same prefix, longer names appear earlier.
+  // e.g. "abc:pqr:xyz" appears earlier than "abc:pqr",
+  // which appears earlier than "abc"
 
-  var k;
-  for (k in G.sample.data) {
-    G.parsedSample['VxT' + G.dataFieldNames.indexOf(k)] = G.sample.data[k];
-  }
+  fnlist.forEach(function (fn, i) {
+    G.fn2Var[fn] = 'VxT' + i;
+    G.parsedSample[G.fn2Var[fn]] = G.sample.data[fn];
+  });
 
-  G.dataFieldNames.forEach(function (fn) {
+  for (var fn in G.fn2Var) {
     var par = G.fnTree;
     fn.split(':').forEach(function (seg) {
       if (! (seg in par)) { par[seg] = {}; }
       par = par[seg];
     });
-  });
+  }
 
   $('#data-field-names').html(genNestedList(G.fnTree));
   $('#data-field-names > ul').attr('id', 'fn-menu').menu();
@@ -179,13 +186,13 @@ function pasteFieldName(div) {
 }
 
 function recalcRedraw() {
-  var rawExpr, expr, field, region, time, k;
+  var rawExpr, expr, field, region, time, fn, k;
   for (field in G.exprFields) {
     G.domain[field] = { max: -9e99, min: 9e99 };
     rawExpr = expr = d3.select('#'+field+'-field').property('value');
-    G.dataFieldNames.forEach(function (fn, i) {
-      expr = expr.replace(fn, 'VxT'+i);
-    });
+    for (fn in G.fn2Var) {
+      expr = expr.replace(fn, G.fn2Var[fn]);
+    }
     // http://javascript.info/tutorial/exceptions
     try {
       G.exprFields[field] = Parser.parse(expr);
@@ -203,8 +210,8 @@ function recalcRedraw() {
     for (time in G.joined[region]) {
       G.evaluated[region][time] = {};
       var subst = {};
-      for (k in G.joined[region][time]) {
-        subst['VxT' + G.dataFieldNames.indexOf(k)] = G.joined[region][time][k];
+      for (fn in G.joined[region][time]) {
+	subst[G.fn2Var[fn]] = G.joined[region][time][fn];
       }
       for (field in G.exprFields) {
 	try {
@@ -271,7 +278,7 @@ function redraw() {
     .duration(1000)
     .attr('cx', function(d) { return G.scale.xAxis(d.value[now].xAxis); })
     .attr('cy', function(d) { return G.scale.yAxis(d.value[now].yAxis); })
-    .attr('r', function(d) { return G.scale.width(d.value[now].width/2); })
+    .attr('r', function(d) { return G.scale.width(d.value[now].width) / 2; })
     .style('fill', function(d) { return G.joined[d.key][now][G.config.dimExpr['color']]; })
     .style('fill-opacity', function(d) {
       d = d.value[now];
