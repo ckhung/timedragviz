@@ -87,8 +87,6 @@ Note: Firefox makes reading local data files easier.
 For chrome users, one need to do it from the command line.
 See <a href="https://github.com/ckhung/javascriptCanReadLocalFiles">
 javascriptCanReadLocalFiles</a> for more details.
-Also note: in these two files, <em>extra spaces before
-or after each field name must be removed!</em>
 
 <p>In any case you specify the locations and names of these two csv files
 in the configuration file <code>config.json</code>.
@@ -97,9 +95,10 @@ and "join" them on the region name field to produce the
 complete data set that you can explore.
 
 <p>The field names can be ascii or utf-8 strings.
-They <em>must not</em> contain white spaces, certain
-math function names (such as <code>sin</code>, <code>cos</code>,
-<code>tan</code>, <code>sqrt</code>, <code>log</code>)
+<em>Extra spaces before or after each field name must be removed!</em>
+Moreover, the field names themselves <em>must not</em> contain
+white spaces, certain math function names (such as <code>sin</code>,
+<code>cos</code>, <code>tan</code>, <code>sqrt</code>, <code>log</code>)
 or characters used in math expressions such as +, -, *, /, (, ).
 In addition, they must not contain the substring of this format:
 <code>VxT<em>nn</em></code> (e.g. <code>VxT0</code>、
