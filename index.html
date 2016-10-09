@@ -83,6 +83,10 @@ Each parameter will correspond to one column.
 <p>These two csv files can be located in the same directory as
 the downloaded vizxtime code. Or they can be located at some
 publicly accessible remote URL.
+Note: Firefox makes reading local data files easier.
+For chrome users, one need to do it from the command line.
+See <a href="https://github.com/ckhung/javascriptCanReadLocalFiles">
+javascriptCanReadLocalFiles</a> for more details.
 Also note: in these two files, <em>extra spaces before
 or after each field name must be removed!</em>
 
@@ -203,17 +207,19 @@ in milliseconds.
 
 <p>In addition, you may specify the name or the URL
 of the configuration file by appending the "?config=URL"
-suffix to the URL of the vizxtime html page, like :
+query string to the URL of the vizxtime html page, like
 <a href="file:///mnt/worksp/home/ckhung/git/vizxtime/vizxtime.html?config=https://raw.githubusercontent.com/ckhung/vizxtime/gh-pages/config.json">
 this</a>. Thus you can play with several sets of data
 (each composing of one configuration file plus two csv files)
 with a single copy of the vizxtime code.
 
-<h4>4. Error handling</h4>
+<h4>4. Error handling and debugging</h4>
 
 <ol>
 <li>Entries with missing parameters are made transparent
 (and thus disappear).
+<li>To see the inner workings of vizxtime, open the
+console and examine the global variable <code>G</code>.
 </ol>
 
       <footer class="site-footer">
