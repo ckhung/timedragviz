@@ -7,7 +7,7 @@ var G = {
   joined: {},		// main data structure (joining regions and data)
   evaluated: {},	// re-evaluated in recalcRedraw() after each change of expressions
   lastFocus: null,	// the html input element that most recently received input focus
-  domain: {},		// min and max of xAxis, yAxis, and width
+  domain: {},		// min and max of xAxis, yAxis, width; domain of "time"
   scale: {},		// the scale objects for xAxis, yAxis, and width
   fn2Var: [],		// [field name] to [variable name] hash
   fnTree: {},		// field name tree for constructing the nested menu
@@ -88,16 +88,20 @@ function init(error, data) {
       d != G.config.dimExpr['time'] &&
       d != G.config.dimExpr['color'];
   });
-  fnlist.sort(function(a,b) { return -a.localeCompare(b); } );
-  // reverse sort, so that of all field names sharing the
-  // same prefix, longer names appear earlier.
-  // e.g. "abc:pqr:xyz" appears earlier than "abc:pqr",
-  // which appears earlier than "abc"
+  fnlist.sort(function(a,b) {
+    var n = a.length - b.length;
+    return n ? -n : a.localeCompare(b);
+  });
+  // reverse sort by string length, then sort by locale,
+  // so that longer names appear earlier.
+  // e.g. "mno:pqr:xyz" appears earlier than "pqr:xyz",
+  // which appears earlier than "pqr"
   // Thus more specific names are substituted first
   // in variable substitutions
 
   fnlist.forEach(function (fn, i) {
-    G.fn2Var[fn] = 'VxT' + i;
+    i = i + 10000;
+    G.fn2Var[fn] = 'VxT' + i.toString().substr(1);
     G.parsedSample[G.fn2Var[fn]] = G.sample.data[fn];
   });
 
@@ -192,9 +196,9 @@ function recalcRedraw() {
   for (field in G.exprFields) {
     G.domain[field] = { max: -9e99, min: 9e99 };
     rawExpr = expr = d3.select('#'+field+'-field').property('value');
-    for (fn in G.fn2Var) {
+    Object.keys(G.fn2Var).sort().forEach(function (fn) {
       expr = expr.replace(fn, G.fn2Var[fn]);
-    }
+    });
     // http://javascript.info/tutorial/exceptions
     try {
       G.exprFields[field] = Parser.parse(expr);
@@ -207,9 +211,19 @@ function recalcRedraw() {
     G.config.dimExpr[field] = rawExpr;
   }
 
+  G.domain.time = {};
+  for (region in G.joined) {
+    for (time in G.joined[region]) {
+      G.domain.time[time] = 1;
+    }
+  }
+
   for (region in G.joined) {
     G.evaluated[region] = {};
-    for (time in G.joined[region]) {
+    for (time in G.domain.time) {
+      if (typeof G.joined[region][time] == 'undefined') {
+	G.joined[region][time] = {};
+      }
       G.evaluated[region][time] = {};
       var subst = {};
       for (fn in G.joined[region][time]) {
