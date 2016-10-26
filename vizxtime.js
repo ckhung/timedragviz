@@ -45,6 +45,9 @@ function organizeData(data) {
     if (! (d[regionFN] in G.joined)) {
       G.joined[d[regionFN]] = {};
     }
+    if (! d[timeFN]) {
+      console.log('missing "' + timeFN + '" field: ', d);
+    }
     G.joined[d[regionFN]][d[timeFN]] = d;
   });
 
@@ -102,7 +105,7 @@ function init(error, data) {
   fnlist.forEach(function (fn, i) {
     i = i + 10000;
     G.fn2Var[fn] = 'VxT' + i.toString().substr(1);
-    G.parsedSample[G.fn2Var[fn]] = G.sample.data[fn];
+    G.parsedSample[G.fn2Var[fn]] = (G.sample.data[fn] || NaN);
   });
 
   for (var fn in G.fn2Var) {
