@@ -3,7 +3,9 @@
 
 var G = {
   viewBox: {},		// width and height of viewBox of #rsvg-box
-  regions: {},		// original data read from filename.regions
+  regions: {},		// original data read from filename.regions,
+			// re-arranged using region names as keys
+  regionNames: [],	// list of region names
   joined: {},		// main data structure (joining regions and data)
   evaluated: {},	// re-evaluated in recalcRedraw() after each change of expressions
   lastFocus: null,	// the html input element that most recently received input focus
@@ -38,7 +40,10 @@ $.getJSON(configFN)
 
 function organizeData(data) {
   // field name for "region", field name for "time"
-  var regionFN = G.config.dimExpr['region'], timeFN = G.config.dimExpr['time'];
+  var
+    regionFN = G.config.dimExpr['region'],
+    timeFN = G.config.dimExpr['time'],
+    colorFN = G.config.dimExpr['color'];
 
   // initialize G.joined from the data file
   data[1].forEach(function (d) {
@@ -55,13 +60,14 @@ function organizeData(data) {
   var region, time, k;
   data[0].forEach(function (d) {
     region = d[regionFN];
+    G.regionNames.push(region);
+    G.regions[region] = d;
     for (time in G.joined[region]) {
       for (k in d) {
 	G.joined[region][time][k] = d[k];
       }
     }
   });
-  G.regions = data[0].map(function (d) { return d[regionFN]; });
 }
 
 function init(error, data) {
@@ -156,15 +162,33 @@ function init(error, data) {
     trigger: $('#rs-trigger'),
     push: false,
     width: '50%',
-    position: 'right'
   });
-  G.regions.forEach(function (r) {
+
+  G.regionNames.forEach(function (r) {
+    var id = region2id(r);
     $('#region-selector').append(
-      '<button>' + r + '</button> '
+      '<button id="' + id + '">' + r + '</button> '
     );
+    $('#' + id).css('background', G.regions[r][G.config.dimExpr['color']]);
   });
 
   recalcRedraw();
+}
+
+// https://stackoverflow.com/questions/21647928/javascript-unicode-string-to-hex
+String.prototype.hexEncode = function(){
+    var hex, i;
+
+    var result = '';
+    for (i=0; i<this.length; i++) {
+        hex = this.charCodeAt(i).toString(16);
+        result += ('000'+hex).slice(-4);
+    }
+    return result;
+};
+
+function region2id(region) {
+    return 'reg_' + region.hexEncode();
 }
 
 function genNestedList(fnTree, level) {
