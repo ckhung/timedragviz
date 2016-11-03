@@ -152,6 +152,18 @@ function init(error, data) {
   G.canvas.append('g').attr('id', 'xAxis');
   G.canvas.append('g').attr('id', 'yAxis');
 
+  $('#region-selector').slideReveal({
+    trigger: $('#rs-trigger'),
+    push: false,
+    width: '50%',
+    position: 'right'
+  });
+  G.regions.forEach(function (r) {
+    $('#region-selector').append(
+      '<button>' + r + '</button> '
+    );
+  });
+
   recalcRedraw();
 }
 
@@ -247,17 +259,15 @@ function recalcRedraw() {
 
   d3.select('#rsvg-box svg')
     .append('text')
-    .text(G.config.dimExpr['xAxis'])
+    .attr('id', 'xlabel')
     .attr('x', G.viewBox.width/2)
-    .attr('y', G.viewBox.height-16)
-    .attr('text-anchor', 'middle')
-    .attr('font-size', "14px");
+    .attr('y', G.viewBox.height-2)
+    .text(G.config.dimExpr['xAxis']);
   d3.select('#rsvg-box svg')
     .append('text')
-    .text(G.config.dimExpr['yAxis'])
-    .attr('text-anchor', 'middle')
+    .attr('id', 'ylabel')
     .attr('transform', 'translate(18,' + G.viewBox.height/2 + ') rotate(-90)')
-    .attr('font-size', '14px');
+    .text(G.config.dimExpr['yAxis']);
 
   // http://stackoverflow.com/questions/9589768/using-an-associative-array-as-data-for-d3
   var circles = G.canvas.selectAll('.region').data(d3.entries(G.evaluated));
