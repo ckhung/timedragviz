@@ -245,6 +245,20 @@ function recalcRedraw() {
     }
   }
 
+  d3.select('#rsvg-box svg')
+    .append('text')
+    .text(G.config.dimExpr['xAxis'])
+    .attr('x', G.viewBox.width/2)
+    .attr('y', G.viewBox.height-16)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', "14px");
+  d3.select('#rsvg-box svg')
+    .append('text')
+    .text(G.config.dimExpr['yAxis'])
+    .attr('text-anchor', 'middle')
+    .attr('transform', 'translate(18,' + G.viewBox.height/2 + ') rotate(-90)')
+    .attr('font-size', '14px');
+
   // http://stackoverflow.com/questions/9589768/using-an-associative-array-as-data-for-d3
   var circles = G.canvas.selectAll('.region').data(d3.entries(G.evaluated));
   circles.exit().remove();
