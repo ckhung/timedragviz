@@ -4,7 +4,8 @@
 var G = {
   viewBox: {},		// width and height of viewBox of #rsvg-box
   regions: {},		// original data read from filename.regions,
-			// re-arranged using region names as keys
+			// re-arranged using region names as keys,
+			// plus .state
   regionNames: [],	// list of region names
   joined: {},		// main data structure (joining regions and data)
   evaluated: {},	// re-evaluated in recalcRedraw() after each change of expressions
@@ -26,7 +27,15 @@ var configFN = $.url(location.href).param('config');
 if (! configFN) { configFN = 'config.json'; }
 $.getJSON(configFN)
   .done(function(data) {
-    G.config = data;
+    G.config = {
+      transition: 1000,
+      opacity: 0.4,
+      width: {
+	min: 10,
+	max: 80
+      }
+    };
+    $.extend(true, G.config, data);
     queue()
       .defer(d3.csv, G.config.filename.regions)
       .defer(d3.csv, G.config.filename.data)
@@ -62,6 +71,7 @@ function organizeData(data) {
     region = d[regionFN];
     G.regionNames.push(region);
     G.regions[region] = d;
+    G.regions[region].state = 0;	// do not show region
     for (time in G.joined[region]) {
       for (k in d) {
 	G.joined[region][time][k] = d[k];
@@ -169,7 +179,18 @@ function init(error, data) {
     $('#region-selector').append(
       '<button id="' + id + '">' + r + '</button> '
     );
-    $('#' + id).css('background', G.regions[r][G.config.dimExpr['color']]);
+    $('#region-selector button:last-child')
+      .click(function() {
+	var r = $(this).text();
+	G.regions[r].state = 2 - G.regions[r].state;
+	var circle = d3.select('#' + blobID(r));
+	circle.style('fill-opacity', G.regions[r].state ? G.config.opacity : 0);
+	var c = G.regions[r][G.config.dimExpr['color']];
+	$(this).css('background', G.regions[r].state ?
+	  rgba(c, G.config.opacity) :
+	  $('#region-selector').css('background-color')
+	);
+      }).click(); // show regions
   });
 
   recalcRedraw();
@@ -189,6 +210,10 @@ String.prototype.hexEncode = function(){
 
 function region2id(region) {
     return 'reg_' + region.hexEncode();
+}
+
+function blobID(region) {
+    return 'blob-' + region.hexEncode();
 }
 
 function genNestedList(fnTree, level) {
@@ -298,6 +323,7 @@ function recalcRedraw() {
   circles.exit().remove();
   circles.enter()
     .append('circle')
+    .attr('id', function(d) { return blobID(d.key); })
     .attr('cx', G.viewBox.width/2)
     .attr('cy', G.viewBox.height/2)
     .attr('r', 10)
@@ -348,8 +374,9 @@ function redraw() {
     .attr('r', function(d) { return G.scale.width(d.value[now].width) / 2; })
     .style('fill', function(d) { return G.joined[d.key][now][G.config.dimExpr['color']]; })
     .style('fill-opacity', function(d) {
+      if (! G.regions[d.key].state) { return 0; }
       d = d.value[now];
-      return isNaN(d.xAxis) || isNaN(d.yAxis) || isNaN(d.width) ? 0 : 0.4;
+      return isNaN(d.xAxis) || isNaN(d.yAxis) || isNaN(d.width) ? 0 : G.config.opacity;
     })
     .select('.tooltip')
     .text(function(d) {
@@ -390,5 +417,11 @@ function saveDrawing() {
     {type: 'image/svg+xml', endings: 'native'}
   );
   saveAs(blob, 'vizxtime.svg');
+}
+
+function rgba(hex, alpha) {
+  var m = hex.match(/#?(..)(..)(..)/);
+  return 'rgba(' + parseInt(m[1],16) + ',' + parseInt(m[2],16) +
+    ',' + parseInt(m[3],16) + ',' + alpha + ')';
 }
 
