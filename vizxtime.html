@@ -72,12 +72,10 @@
 
           <div class="s-padding">
             <!-- http://stackoverflow.com/questions/19454310/stop-form-refreshing-page-on-submit -->
-            <button type="button" id="rs-trigger" class="pure-button pure-primary pure-u-1-6" title="select regions">reg</button>
-            <div class="pure-u-1-12"></div>
-            <button type="button" id="save-svg" onclick="saveDrawing()" class="pure-button pure-primary pure-u-1-6" title="save svg">svg</button>
-            <div class="pure-u-1-12"></div>
-            <button type="button" id="save-expr" onclick="saveConfig()" class="pure-button pure-primary pure-u-1-6" title="save config">cfg</button>
-            <div class="pure-u-1-12"></div>
+            <button type="button" id="save-svg" onclick="saveDrawing()" class="pure-button pure-primary pure-u-1-4" title="save svg">svg</button>
+            <div class="pure-u-1-8"></div>
+            <button type="button" id="save-expr" onclick="saveConfig()" class="pure-button pure-primary pure-u-1-4" title="save config">cfg</button>
+            <div class="pure-u-1-8"></div>
             <button type="button" id="recalc" onclick="recalcRedraw()" class="pure-button pure-primary pure-u-1-4" title="re-calculate">recalc</button>
           </div>
         </form>
@@ -109,16 +107,20 @@
           <div class="pure-u-17-24" id="time-slider"></div>
           <div class="pure-u-1-12"></div>
           <div class="pure-u-1-12">
-	    <div id="region-selector">
-	      Show only selected regions:<br />
-	      (presee ESC to exit)<br />
-	    </div>
+            <button type="button" id="rs-trigger" class="pure-button pure-primary" title="select regions">reg</button>
           </div>
         </div>
       </div>
     </div>
 
+
   </div><!-- #content .pure-g -->
+
+	    <div id="region-selector">
+	      Show only selected regions:<br />
+	      (presee ESC to exit)<br />
+	    </div>
+
   <script type="text/javascript" src="jqui/external/jquery/jquery.js"></script>
   <script type="text/javascript" src="jqui/jquery-ui.min.js"></script>
   <script type="text/javascript" src="jquery.slidereveal.js"></script>

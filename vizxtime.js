@@ -105,7 +105,8 @@ function init(error, data) {
   var fnlist = Object.keys(G.sample.data).filter(function (d) {
     return d != G.config.dimExpr['region'] &&
       d != G.config.dimExpr['time'] &&
-      d != G.config.dimExpr['color'];
+      d != G.config.dimExpr['color'] &&
+      d != 'state';
   });
   fnlist.sort(function(a,b) {
     var n = a.length - b.length;
@@ -168,10 +169,21 @@ function init(error, data) {
   G.canvas.append('g').attr('id', 'xAxis');
   G.canvas.append('g').attr('id', 'yAxis');
 
+  d3.select('#rsvg-box svg')
+    .append('text')
+    .attr('id', 'xlabel')
+    .attr('x', G.viewBox.width/2)
+    .attr('y', G.viewBox.height-2);
+  d3.select('#rsvg-box svg')
+    .append('text')
+    .attr('id', 'ylabel')
+    .attr('transform', 'translate(18,' + G.viewBox.height/2 + ') rotate(-90)');
+
   $('#region-selector').slideReveal({
     trigger: $('#rs-trigger'),
-    push: false,
-    width: '50%',
+    push: true,
+    position: 'right',
+    width: '25%',
   });
 
   G.regionNames.forEach(function (r) {
@@ -306,17 +318,8 @@ function recalcRedraw() {
     }
   }
 
-  d3.select('#rsvg-box svg')
-    .append('text')
-    .attr('id', 'xlabel')
-    .attr('x', G.viewBox.width/2)
-    .attr('y', G.viewBox.height-2)
-    .text(G.config.dimExpr['xAxis']);
-  d3.select('#rsvg-box svg')
-    .append('text')
-    .attr('id', 'ylabel')
-    .attr('transform', 'translate(18,' + G.viewBox.height/2 + ') rotate(-90)')
-    .text(G.config.dimExpr['yAxis']);
+  d3.select('#xlabel').text(G.config.dimExpr['xAxis']);
+  d3.select('#ylabel').text(G.config.dimExpr['yAxis']);
 
   // http://stackoverflow.com/questions/9589768/using-an-associative-array-as-data-for-d3
   var circles = G.canvas.selectAll('.region').data(d3.entries(G.evaluated));
