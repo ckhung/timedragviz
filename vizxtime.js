@@ -187,9 +187,8 @@ function init(error, data) {
   });
 
   G.regionNames.forEach(function (r) {
-    var id = region2id(r);
     $('#region-selector').append(
-      '<button id="' + id + '">' + r + '</button> '
+      '<button class="region">' + r + '</button> '
     );
     $('#region-selector button:last-child')
       .click(function() {
@@ -210,22 +209,29 @@ function init(error, data) {
 
 // https://stackoverflow.com/questions/21647928/javascript-unicode-string-to-hex
 String.prototype.hexEncode = function(){
-    var hex, i;
+  var hex, i;
 
-    var result = '';
-    for (i=0; i<this.length; i++) {
-        hex = this.charCodeAt(i).toString(16);
-        result += ('000'+hex).slice(-4);
-    }
-    return result;
+  var result = '';
+  for (i=0; i<this.length; i++) {
+    hex = this.charCodeAt(i).toString(16);
+    result += ('000'+hex).slice(-4);
+  }
+  return result;
 };
 
-function region2id(region) {
-    return 'reg_' + region.hexEncode();
+function blobID(region) {
+  return 'blob-' + region.hexEncode();
 }
 
-function blobID(region) {
-    return 'blob-' + region.hexEncode();
+function selRegionAll() {
+  $('#region-selector button.region').each(function () {
+    var r = $(this).text();
+    if (! G.regions[r].state) { $(this).click(); }
+  });
+}
+
+function selRegionInvert() {
+  $('#region-selector button.region').click();
 }
 
 function genNestedList(fnTree, level) {
