@@ -1,0 +1,55 @@
+digraph G {
+concentrate = true;
+			subgraph legend{
+			rank = min;
+			label = "legend";
+			Legend [shape=none, margin=0, label = <
+				<table cellspacing="0" cellpadding="0" border="1"><tr><td>Code2flow Legend</td></tr><tr><td>
+				<table cellspacing="0">
+				<tr><td>Regular function</td><td width="50px"></td></tr>
+				<tr><td>Trunk function (nothing calls this)</td><td bgcolor='coral'></td></tr>
+				<tr><td>Leaf function (this calls nothing else)</td><td bgcolor='green'></td></tr>
+				<tr><td>Function call which returns no value</td><td>&#8594;</td></tr>
+				<tr><td>Function call returns some value</td><td><font color='blue'>&#8594;</font></td></tr>
+				</table></td></tr></table>
+				>];}node73 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "0: (vizxtime window frame (runs on import))" ];
+node4 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "6: Region" ];
+node29 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "62: init" ];
+node25 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "118: init.getTimeField" ];
+node31 [splines=ortho shape = "rect" style = "rounded" label = "191: paintButton" ];
+node39 [splines=ortho shape = "rect" style = "rounded" label = "200: organizeData" ];
+node43 [splines=ortho shape = "rect" style = "rounded" label = "238: genNestedList" ];
+node45 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "256: pasteFieldName" ];
+node50 [splines=ortho shape = "rect" style = "rounded" label = "277: recalcRedraw" ];
+node54 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "378: redraw" ];
+node56 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "403: toTime" ];
+node58 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "405: hexEncode" ];
+node62 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "417: selRegionAll" ];
+node64 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "429: selRegionInvert" ];
+node66 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "430: XFZaBin" ];
+node68 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "437: saveConfig" ];
+node70 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "446: saveDrawing" ];
+node72 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "451: rgba" ];
+node29 -> node31;
+node29 -> node39;
+node29 -> node43 [color="blue" penwidth="2"];
+node29 -> node50 [color="blue" penwidth="2"];
+node31 -> node72 [color="blue" penwidth="2"];
+node39 -> node4;
+node43 -> node43 [color="blue" penwidth="2"];
+node50 -> node54 [color="blue" penwidth="2"];
+node56 -> node54 [color="blue" penwidth="2"];
+subgraph clustervizxtime0{
+node73 node4 node29 node25 node31 node39 node43 node45 node50 node54 node56 node58 node62 node64 node66 node68 node70 node72 node4 node31 node39 node43 node45 node50 node54 node56 node58 node62 node64 node66 node68 node70 node72 ;
+label="vizxtime";
+style=filled;
+color=black;
+graph[style=dotted];
+subgraph clusterinit12{
+node29 node25 node25 ;
+label="init";
+style=filled;
+color=black;
+graph[style=dotted];
+}};
+}

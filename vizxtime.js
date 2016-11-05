@@ -1,20 +1,32 @@
 /* jshint esversion: 6, loopfunc: true */
 /* global console, alert, location, d3, $, Parser, queue, Blob, saveAs */
 
+// http://javascriptissexy.com/oop-in-javascript-what-you-need-to-know/
+// http://yehudakatz.com/2011/08/12/understanding-prototypes-in-javascript/
+function Region(name) {
+  this.name = name;
+  // note: initialization of {} fields must occur
+  // in the constructor, not in .prototype,
+  // or else different objects will point to the
+  // single same {} due to shallow copying from .prototype
+  this.raw = {};
+  this.ev = {};
+  // re-evaluated in recalcRedraw() after each change of expressions
+}
+
+Region.prototype = {
+  constructor: Region,
+  show: true
+};
+
 var G = {
   viewBox: {},		// width and height of viewBox of #rsvg-box
-  regions: {},		// original data read from filename.regions,
-			// re-arranged using region names as keys,
-			// plus .state
-  regionNames: [],	// list of region names
-  joined: {},		// main data structure (joining regions and data)
-  evaluated: {},	// re-evaluated in recalcRedraw() after each change of expressions
+  regObjs: {},		// hash of region objects, keyed by region names
   lastFocus: null,	// the html input element that most recently received input focus
   domain: {},		// min and max of xAxis, yAxis, width; domain of "time"
   scale: {},		// the scale objects for xAxis, yAxis, and width
   fn2Var: [],		// [field name] to [variable name] hash
   fnTree: {},		// field name tree for constructing the nested menu
-  sample: {},		// one row of sample data
   parsedSample: {},	// values of var's in sample data
   xtraFun: {		// extra functions for the (expression) Parser.
     'ZaBin': XFZaBin,
@@ -47,39 +59,6 @@ $.getJSON(configFN)
     throw new Error(msg);
   });
 
-function organizeData(data) {
-  // field name for "region", field name for "time"
-  var
-    regionFN = G.config.dimExpr['region'],
-    timeFN = G.config.dimExpr['time'],
-    colorFN = G.config.dimExpr['color'];
-
-  // initialize G.joined from the data file
-  data[1].forEach(function (d) {
-    if (! (d[regionFN] in G.joined)) {
-      G.joined[d[regionFN]] = {};
-    }
-    if (! d[timeFN]) {
-      console.log('missing "' + timeFN + '" field: ', d);
-    }
-    G.joined[d[regionFN]][d[timeFN]] = d;
-  });
-
-  // join the regions file into G.joined
-  var region, time, k;
-  data[0].forEach(function (d) {
-    region = d[regionFN];
-    G.regionNames.push(region);
-    G.regions[region] = d;
-    G.regions[region].state = 0;	// do not show region
-    for (time in G.joined[region]) {
-      for (k in d) {
-	G.joined[region][time][k] = d[k];
-      }
-    }
-  });
-}
-
 function init(error, data) {
   /******************* received input data files *******************/
   if (error) { return console.warn(error); }
@@ -98,15 +77,14 @@ function init(error, data) {
     G.lastFocus.addClass('active');
   });
 
-  G.sample.region = Object.keys(G.joined)[0];
-  G.sample.time = Object.keys(G.joined[G.sample.region])[0];
-  G.sample.data = G.joined[G.sample.region][G.sample.time];
+  var sample = {};
+  sample.region = G.regObjs[Object.keys(G.regObjs)[0]];
+  sample.time = Object.keys(sample.region.raw)[0];
+  sample.data = sample.region.raw[sample.time];
 
-  var fnlist = Object.keys(G.sample.data).filter(function (d) {
+  var fnlist = Object.keys(sample.data).filter(function (d) {
     return d != G.config.dimExpr['region'] &&
-      d != G.config.dimExpr['time'] &&
-      d != G.config.dimExpr['color'] &&
-      d != 'state';
+      d != G.config.dimExpr['time'];
   });
   fnlist.sort(function(a,b) {
     var n = a.length - b.length;
@@ -122,7 +100,7 @@ function init(error, data) {
   fnlist.forEach(function (fn, i) {
     i = i + 10000;
     G.fn2Var[fn] = 'VxT' + i.toString().substr(1);
-    G.parsedSample[G.fn2Var[fn]] = (G.sample.data[fn] || NaN);
+    G.parsedSample[G.fn2Var[fn]] = (sample.data[fn] || NaN);
   });
 
   for (var fn in G.fn2Var) {
@@ -186,58 +164,79 @@ function init(error, data) {
     width: '25%',
   });
 
-  G.regionNames.forEach(function (r) {
-    $('#region-selector').append(
-      '<button class="region">' + r + '</button> '
-    );
-    $('#region-selector button:last-child')
-      .click(function() {
-	var r = $(this).text();
-	G.regions[r].state = 2 - G.regions[r].state;
-	var circle = d3.select('#' + blobID(r));
-	circle.style('fill-opacity', G.regions[r].state ? G.config.opacity : 0);
-	var c = G.regions[r][G.config.dimExpr['color']];
-	$(this).css('background', G.regions[r].state ?
-	  rgba(c, G.config.opacity) :
-	  $('#region-selector').css('background-color')
-	);
-      }).click(); // show regions
+  for (var name in G.regObjs) {
+    var reg = G.regObjs[name];
+    // http://stackoverflow.com/questions/1443233/easier-way-to-get-a-jquery-object-from-appended-element
+    var button = $('<button class="region">' + name + '</button> ').appendTo($('#region-selector'));
+    reg.button = button;
+    // no need for this: reg.button = $('#region-selector button:last-child');
+
+    // https://api.jquery.com/data/
+    button.data('region', reg);
+    paintButton(button);
+  }
+
+  $('#region-selector button.region').click(function() {
+    var reg = G.regObjs[$(this).text()];
+    reg.show = ! reg.show;
+    reg.circle.attr('visibility', reg.show ? 'visible' : 'hidden');
+    paintButton($(this));
   });
 
   recalcRedraw();
 }
 
-// https://stackoverflow.com/questions/21647928/javascript-unicode-string-to-hex
-String.prototype.hexEncode = function(){
-  var hex, i;
-
-  var result = '';
-  for (i=0; i<this.length; i++) {
-    hex = this.charCodeAt(i).toString(16);
-    result += ('000'+hex).slice(-4);
-  }
-  return result;
-};
-
-function blobID(region) {
-  return 'blob-' + region.hexEncode();
+function paintButton(button) {
+  var reg = button.data('region');
+  button.css('background-color', reg.show ?
+    rgba(reg.color, G.config.opacity) :
+    $('#region-selector').css('background-color')
+  );
 }
 
-function selRegionAll() {
-  $('#region-selector button.region').each(function () {
-    var r = $(this).text();
-    if (! G.regions[r].state) { $(this).click(); }
+function organizeData(data) {
+  // field name for "region", field name for "time"
+  var name, reg, time, k, region,
+    regionFN = G.config.dimExpr['region'],
+    timeFN = G.config.dimExpr['time'];
+
+  data[0].forEach(function (d) {
+    name = d[regionFN];
+    reg = new Region(name);
+    reg.color = d[G.config.dimExpr['color']];
+    reg.prop = d;	// the original properties from the regions file
+    G.regObjs[name] = reg;
   });
-}
 
-function selRegionInvert() {
-  $('#region-selector button.region').click();
+  // initialize G.regObjs from the data file
+  data[1].forEach(function (d) {
+    name = d[regionFN];
+    if (! (name in G.regObjs)) {
+      console.log('ignoring unknown region "' + name + '")');
+    }
+    if (! d[timeFN]) {
+      console.log('missing "' + timeFN + '" field: ', d);
+    }
+    G.regObjs[name].raw[d[timeFN]] = d;
+  });
+
+  // join the regions file into the .raw field of region objects
+  data[0].forEach(function (d) {
+    name = d[regionFN];
+    reg = G.regObjs[name];
+    for (time in reg.raw) {
+      for (k in d) {
+	reg.raw[time][k] = d[k];
+      }
+    }
+  });
+
 }
 
 function genNestedList(fnTree, level) {
   if (! level) { level = 0; }
   var prefix = '  '.repeat(level), r = prefix + '<ul>\n';
-  Object.keys(fnTree).sort().forEach(function f(n) {
+  Object.keys(fnTree).sort().forEach(function (n) {
     r += prefix + '<li class="fn-segment">';
     if (fnTree[n] && typeof fnTree[n] === 'object' &&
       Object.keys(fnTree[n]).length > 0) {
@@ -274,7 +273,7 @@ function pasteFieldName(div) {
 }
 
 function recalcRedraw() {
-  var rawExpr, expr, field, region, time, fn, k;
+  var rawExpr, expr, field, name, reg, region, time, fn, k;
   for (field in G.exprFields) {
     G.domain[field] = { max: -9e99, min: 9e99 };
     rawExpr = expr = d3.select('#'+field+'-field').property('value');
@@ -284,7 +283,7 @@ function recalcRedraw() {
     // http://javascript.info/tutorial/exceptions
     try {
       G.exprFields[field] = Parser.parse(expr);
-      merge(G.exprFields[field].functions, G.xtraFun);
+      $.extend(G.exprFields[field].functions, G.xtraFun);
       G.exprFields[field].evaluate(G.parsedSample);
     } catch(e) {
       alert('Failed parsing "' + field + '" field:\n[ ' + expr + ' ]\n' + e.toString());
@@ -294,33 +293,37 @@ function recalcRedraw() {
   }
 
   G.domain.time = {};
-  for (region in G.joined) {
-    for (time in G.joined[region]) {
+  for (region in G.regObjs) {
+    for (time in G.regObjs[region].raw) {
       G.domain.time[time] = 1;
     }
   }
 
-  for (region in G.joined) {
-    G.evaluated[region] = {};
+  for (name in G.regObjs) {
+    reg = G.regObjs[name];
     for (time in G.domain.time) {
-      if (typeof G.joined[region][time] == 'undefined') {
-	G.joined[region][time] = {};
+      reg.ev[time] = {};
+      if (typeof reg.raw[time] == 'undefined') {
+	reg.raw[time] = {};
       }
-      G.evaluated[region][time] = {};
       var subst = {};
-      for (fn in G.joined[region][time]) {
-	subst[G.fn2Var[fn]] = G.joined[region][time][fn];
+      for (fn in reg.raw[time]) {
+	subst[G.fn2Var[fn]] = reg.raw[time][fn];
       }
       for (field in G.exprFields) {
 	try {
 	  var v = parseFloat(G.exprFields[field].evaluate(subst));
 	  if (v > G.domain[field].max) { G.domain[field].max = v; }
 	  if (v < G.domain[field].min) { G.domain[field].min = v; }
-	  G.evaluated[region][time][field] = v;
+	  reg.ev[time][field] = v;
 	} catch(e) {
 	  console.log('Failed evaluating "' + field + '" field for ' + time + ',' + region + '\n' + e.toString());
 	}
       }
+      var now = reg.ev[time];
+      now.opac =
+	isNaN(now.xAxis) || isNaN(now.yAxis) || isNaN(now.width) ?
+	0 : G.config.opacity;
     }
   }
 
@@ -328,11 +331,10 @@ function recalcRedraw() {
   d3.select('#ylabel').text(G.config.dimExpr['yAxis']);
 
   // http://stackoverflow.com/questions/9589768/using-an-associative-array-as-data-for-d3
-  var circles = G.canvas.selectAll('.region').data(d3.entries(G.evaluated));
+  var circles = G.canvas.selectAll('.region').data(d3.entries(G.regObjs));
   circles.exit().remove();
   circles.enter()
     .append('circle')
-    .attr('id', function(d) { return blobID(d.key); })
     .attr('cx', G.viewBox.width/2)
     .attr('cy', G.viewBox.height/2)
     .attr('r', 10)
@@ -340,6 +342,7 @@ function recalcRedraw() {
     .classed('region', true)
     .append('svg:title')
     .classed('tooltip', true);
+  circles.each(function (d) { d.value.circle = d3.select(this); });
 
   // https://stackoverflow.com/questions/16919280/how-to-update-axis-using-d3-js
   G.scale.xAxis = d3.scale.linear()
@@ -367,29 +370,19 @@ function recalcRedraw() {
   redraw();
 }
 
-function toTime(evt, value) {
-  d3.select('#time-text').text(value);
-  G.now = value;
-  redraw();
-}
-
 function redraw() {
   var now = G.timeSlider.value();
   G.canvas.selectAll('.region')
     .transition()
-    .duration(1000)
-    .attr('cx', function(d) { return G.scale.xAxis(d.value[now].xAxis); })
-    .attr('cy', function(d) { return G.scale.yAxis(d.value[now].yAxis); })
-    .attr('r', function(d) { return G.scale.width(d.value[now].width) / 2; })
-    .style('fill', function(d) { return G.joined[d.key][now][G.config.dimExpr['color']]; })
-    .style('fill-opacity', function(d) {
-      if (! G.regions[d.key].state) { return 0; }
-      d = d.value[now];
-      return isNaN(d.xAxis) || isNaN(d.yAxis) || isNaN(d.width) ? 0 : G.config.opacity;
-    })
+    .duration(G.config.transition)
+    .attr('cx', function(d) { return G.scale.xAxis(d.value.ev[now].xAxis); })
+    .attr('cy', function(d) { return G.scale.yAxis(d.value.ev[now].yAxis); })
+    .attr('r', function(d) { return G.scale.width(d.value.ev[now].width) / 2; })
+    .style('fill', function(d) { return d.value.color; })
+    .style('fill-opacity', function(d) { return d.value.ev[now].opac; })
     .select('.tooltip')
     .text(function(d) {
-      var n = d.value[now];
+      var n = d.value.ev[now];
       var msg = d.key + '\n' +
 	'x:' + n.xAxis + '\n' +
 	'y:' + n.yAxis + '\n' +
@@ -398,16 +391,37 @@ function redraw() {
     });
 }
 
+function toTime(evt, value) {
+  d3.select('#time-text').text(value);
+  G.now = value;
+  redraw();
+}
+
+// https://stackoverflow.com/questions/21647928/javascript-unicode-string-to-hex
+String.prototype.hexEncode = function(){
+  var hex, i, result = '';
+  for (i=0; i<this.length; i++) {
+    hex = this.charCodeAt(i).toString(16);
+    result += ('000'+hex).slice(-4);
+  }
+  return result;
+};
+
+function selRegionAll() {
+  $('#region-selector button.region').each(function () {
+    var r = $(this).text();
+    if (! G.regObjs[r].show) { $(this).click(); }
+  });
+}
+
+function selRegionInvert() {
+  $('#region-selector button.region').click();
+}
+
 function XFZaBin(p, N, mu) {
   // Normal approximation to Binomial
   // https://onlinecourses.science.psu.edu/stat414/node/179
   return (p-mu) / Math.sqrt(mu*(1-mu)/N);
-}
-
-function merge(dst, xtra) {
-  Object.keys(xtra).forEach(function (x) {
-    dst[x] = xtra[x];
-  });
 }
 
 function saveConfig() {
