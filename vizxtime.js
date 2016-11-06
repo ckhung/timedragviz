@@ -68,8 +68,11 @@ function init(error, data) {
 
   d3.select('#region-file').text(G.config.filename.regions);
   d3.select('#data-file').text(G.config.filename.data);
-  ['region', 'time', 'color'].concat(Object.keys(G.exprFields)).forEach(function(k) {
+  ['region', 'time', 'color'].forEach(function(k) {
     d3.select('#'+k+'-field').text(G.config.dimExpr[k]);
+  });
+  Object.keys(G.exprFields).forEach(function(k) {
+    d3.select('#'+k+'-field').attr('value', G.config.dimExpr[k]);
   });
   $('.editable').focus(function () {
     if (G.lastFocus) { G.lastFocus.removeClass('active'); }
