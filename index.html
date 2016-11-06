@@ -28,7 +28,7 @@ two csv data files (for example, exported from LibreOffice calc
 or Microsoft excel), and specify (in a json format
 configuration file) which fields to use for the category names,
 x-axis, y-axis, width, color, and time axis,
-it then draws the scatter plot with a horizontal scale
+it then draws the scatter plot with a horizontal time scale
 so that you can drag the scale and see
 how your plot changes across time.
 See <a href="vizxtime.html">demo</a>.</p>
@@ -143,7 +143,7 @@ into a nested menu tree according to their names
 <p>Then you press the "recalc" button to re-calculate
 the maximum and minimum values of various parameters
 and to re-draw the scatter plot.
-You can then drag the horizontal scale that represents time,
+You can then drag the horizontal time scale.
 and VIualiZe how the chosen parameters in your data change 'cross TIME.
 
 <p>You can go one step further by creating mathematical
@@ -167,13 +167,17 @@ See the source code and <a href=
 "https://onlinecourses.science.psu.edu/stat414/node/179">
 Normal Approximation to Binomial</a> for more details.
 
+<p>Pressing the "reg" button next to the time scale
+brings up the region selector.
+You can then select just a small subset of the regions
+to display.
+
 <p>When you are satisfied with a scatter plot,
 you can press the "svg" button for saving the current plot,
 or press the "config" button for saving the current
 mathematical expressions for the three fields.
 
 <h4>3. The Configuration File</h4>
-
 
 <p>The following values can be changed in the json-format
 configuration file:
@@ -200,6 +204,9 @@ the diameter of the circles.
 (column) that define the colors of the circles.
 <li><code>transition</code> the time for the transition effect,
 in milliseconds.
+<li><code>opacity</code> the opacity of the circles.
+0 means completely transparent (invisible);
+1 means completely obscures anything beneath it.
 <li><code>width.min</code> the diameter of the smallest circle.
 <li><code>width.max</code> the diameter of the largest circle.
 </ol>
@@ -207,8 +214,9 @@ in milliseconds.
 <p>In addition, you may specify the name or the URL
 of the configuration file by appending the "?config=URL"
 query string to the URL of the vizxtime html page, like
-<a href="file:///mnt/worksp/home/ckhung/git/vizxtime/vizxtime.html?config=https://raw.githubusercontent.com/ckhung/vizxtime/gh-pages/config.json">
-this</a>. Thus you can play with several sets of data
+<a href="vizxtime.html?config=NBA-config-zh_TW.json">this</a> or
+<a href="vizxtime.html?config=MLB-config-zh_TW.json">this</a>.
+Thus you can play with several sets of data
 (each composing of one configuration file plus two csv files)
 with a single copy of the vizxtime code.
 

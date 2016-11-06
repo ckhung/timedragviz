@@ -1,0 +1,19 @@
+{
+  "filename": {
+    "regions": "MLB-teams-zh_TW.csv",
+    "data": "MLB-data-zh_TW.csv"
+  },
+  "dimExpr": {
+    "region": "球隊",
+    "time": "年度",
+    "xAxis": "球隊打擊:球隊攻擊指數(上壘率+長打率)",
+    "yAxis": "球隊防禦率(每9局被得多少分)",
+    "width": "球隊勝率",
+    "color": "顏色"
+  },
+  "transition": 1000,
+  "width": {
+    "min": 20,
+    "max": 80
+  }
+}

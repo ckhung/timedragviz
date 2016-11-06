@@ -68,8 +68,8 @@ function init(error, data) {
 
   d3.select('#region-file').text(G.config.filename.regions);
   d3.select('#data-file').text(G.config.filename.data);
-  ['region', 'time'].concat(Object.keys(G.exprFields)).forEach(function(k) {
-    d3.select('#'+k+'-field').property('value', G.config.dimExpr[k]);
+  ['region', 'time', 'color'].concat(Object.keys(G.exprFields)).forEach(function(k) {
+    d3.select('#'+k+'-field').text(G.config.dimExpr[k]);
   });
   $('.editable').focus(function () {
     if (G.lastFocus) { G.lastFocus.removeClass('active'); }
@@ -186,50 +186,47 @@ function init(error, data) {
   recalcRedraw();
 }
 
-function paintButton(button) {
-  var reg = button.data('region');
-  button.css('background-color', reg.show ?
-    rgba(reg.color, G.config.opacity) :
-    $('#region-selector').css('background-color')
-  );
-}
-
 function organizeData(data) {
   // field name for "region", field name for "time"
   var name, reg, time, k, region,
     regionFN = G.config.dimExpr['region'],
     timeFN = G.config.dimExpr['time'];
+    colorFN = G.config.dimExpr['color'];
 
   data[0].forEach(function (d) {
     name = d[regionFN];
+    // skip empty rows
+    if (! name) { return; }
     reg = new Region(name);
-    reg.color = d[G.config.dimExpr['color']];
+    reg.color = d[colorFN];
+    if (! reg.color) reg.color = '#000000';
     reg.prop = d;	// the original properties from the regions file
+    delete reg.prop[regionFN];
+    delete reg.prop[colorFN];
     G.regObjs[name] = reg;
   });
 
   // initialize G.regObjs from the data file
   data[1].forEach(function (d) {
     name = d[regionFN];
+    // skip empty rows and incomplete rows
+    if (! (name && d[timeFN])) { return; }
     if (! (name in G.regObjs)) {
-      console.log('ignoring unknown region "' + name + '")');
-    }
-    if (! d[timeFN]) {
-      console.log('missing "' + timeFN + '" field: ', d);
+      console.log('ignoring unknown region "' + name + '"');
+      return;
     }
     G.regObjs[name].raw[d[timeFN]] = d;
   });
 
   // join the regions file into the .raw field of region objects
-  data[0].forEach(function (d) {
-    name = d[regionFN];
+  for (name in G.regObjs) {
     reg = G.regObjs[name];
     for (time in reg.raw) {
-      for (k in d) {
-	reg.raw[time][k] = d[k];
+      for (k in reg.prop) {
+	reg.raw[time][k] = reg.prop[k];
       }
     }
-  });
+  };
 
 }
 
@@ -358,7 +355,7 @@ function recalcRedraw() {
   xAxis = d3.svg.axis().scale(G.scale.xAxis).orient('top');
   yAxis = d3.svg.axis().scale(G.scale.yAxis).orient('right');
   G.canvas.select('#xAxis')
-    .attr('transform', 'translate(0,'+(G.viewBox.height-40)+')')
+    .attr('transform', 'translate(0,'+(G.viewBox.height-60)+')')
     .call(xAxis);
   G.canvas.select('#yAxis')
     .attr('transform', 'translate(40,0)')
@@ -389,6 +386,14 @@ function redraw() {
 	'w:' + n.width;
       return msg;
     });
+}
+
+function paintButton(button) {
+  var reg = button.data('region');
+  button.css('background-color', reg.show ?
+    rgba(reg.color, G.config.opacity) :
+    $('#region-selector').css('background-color')
+  );
 }
 
 function toTime(evt, value) {
