@@ -278,7 +278,7 @@ function recalcRedraw() {
     G.domain[field] = { max: -9e99, min: 9e99 };
     rawExpr = expr = d3.select('#'+field+'-field').property('value');
     Object.keys(G.fn2Var).sort().forEach(function (fn) {
-      expr = expr.replace(fn, G.fn2Var[fn]);
+      expr = expr.replace(new RegExp(fn, 'g'), G.fn2Var[fn]);
     });
     // http://javascript.info/tutorial/exceptions
     try {
