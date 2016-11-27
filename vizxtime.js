@@ -85,10 +85,12 @@ function init(error, data) {
   sample.time = Object.keys(sample.region.raw)[0];
   sample.data = sample.region.raw[sample.time];
 
+G.sample = sample.data;
   var fnlist = Object.keys(sample.data).filter(function (d) {
     return d != G.config.dimExpr['region'] &&
       d != G.config.dimExpr['time'];
   });
+G.fnlist = fnlist;
   fnlist.sort(function(a,b) {
     var n = a.length - b.length;
     return n ? -n : a.localeCompare(b);
@@ -277,7 +279,7 @@ function recalcRedraw() {
   for (field in G.exprFields) {
     G.domain[field] = { max: -9e99, min: 9e99 };
     rawExpr = expr = d3.select('#'+field+'-field').property('value');
-    Object.keys(G.fn2Var).sort().forEach(function (fn) {
+    Object.keys(G.fn2Var).forEach(function (fn) {
       expr = expr.replace(new RegExp(fn, 'g'), G.fn2Var[fn]);
     });
     // http://javascript.info/tutorial/exceptions
