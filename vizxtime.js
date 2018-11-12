@@ -21,6 +21,7 @@ Region.prototype = {
 
 var G = {
   viewBox: {},		// width and height of viewBox of #rsvg-box
+  regTable: {},		// basic table for regions, may contain info about non-used regions
   regObjs: {},		// hash of region objects, keyed by region names
   lastFocus: null,	// the html input element that most recently received input focus
   domain: {},		// min and max of xAxis, yAxis, width; domain of "time"
@@ -48,6 +49,7 @@ $.getJSON(configFN)
       }
     };
     $.extend(true, G.config, data);
+    if (! G.config.disp) { G.config.disp = G.config.dimExpr.region; }
     queue()
       .defer(d3.csv, G.config.filename.regions)
       .defer(d3.csv, G.config.filename.data)
@@ -85,7 +87,7 @@ function init(error, data) {
   sample.time = Object.keys(sample.region.raw)[0];
   sample.data = sample.region.raw[sample.time];
 
-G.sample = sample.data;
+G.sample = sample;
   var fnlist = Object.keys(sample.data).filter(function (d) {
     return d != G.config.dimExpr['region'] &&
       d != G.config.dimExpr['time'];
@@ -125,6 +127,7 @@ G.fnlist = fnlist;
   var mn = d3.min(data[1], getTimeField),
       mx = d3.max(data[1], getTimeField);
 
+console.log('### ' + mn + ' ' + mx);
   G.timeSlider = d3.slider().axis(true).min(mn).max(mx)
     .step(1).value(mx).on('slide', toTime);
   d3.select('#time-slider').call(G.timeSlider);
@@ -195,32 +198,35 @@ function organizeData(data) {
   // field name for "region", field name for "time"
   var name, reg, time, k, region,
     regionFN = G.config.dimExpr['region'],
-    timeFN = G.config.dimExpr['time'];
+    timeFN = G.config.dimExpr['time'],
     colorFN = G.config.dimExpr['color'];
 
   data[0].forEach(function (d) {
-    name = d[regionFN];
+    name = String(d[regionFN]);
     // skip empty rows
     if (! name) { return; }
-    reg = new Region(name);
-    reg.color = d[colorFN];
-    if (! reg.color) reg.color = '#000000';
-    reg.prop = d;	// the original properties from the regions file
-    delete reg.prop[regionFN];
-    delete reg.prop[colorFN];
-    G.regObjs[name] = reg;
+//    reg = new Region(name);
+    d.color = d[colorFN];
+    if (! d.color) { d.color = '#000000'; }
+//    reg.prop = d;	// the original properties from the regions file
+    delete d[regionFN];
+    delete d[colorFN];
+    G.regTable[name] = d;
   });
+console.log(Object.keys(G.regTable));
 
   // initialize G.regObjs from the data file
   data[1].forEach(function (d) {
-    name = d[regionFN];
+    name = String(d[regionFN]);
     // skip empty rows and incomplete rows
     if (! (name && d[timeFN])) { return; }
-    if (! (name in G.regObjs)) {
+    if (! (name in G.regTable)) {
       console.log('ignoring unknown region "' + name + '"');
       return;
     }
+    if (! (name in G.regObjs)) { G.regObjs[name] = new Region(name); }
     G.regObjs[name].raw[d[timeFN]] = d;
+    G.regObjs[name].prop = G.regTable[name];
   });
 
   // join the regions file into the .raw field of region objects
@@ -231,7 +237,7 @@ function organizeData(data) {
 	reg.raw[time][k] = reg.prop[k];
       }
     }
-  };
+  }
 
 }
 
@@ -322,6 +328,10 @@ function recalcRedraw() {
 	  console.log('Failed evaluating "' + field + '" field for ' + time + ',' + region + '\n' + e.toString());
 	}
       }
+      reg.disp = G.config.disp.replace(G.config.dimExpr.region, reg.name);
+      for (field in reg.prop) {
+        reg.disp = reg.disp.replace(field, reg.prop[field]);
+      }
       var now = reg.ev[time];
       now.opac =
 	isNaN(now.xAxis) || isNaN(now.yAxis) || isNaN(now.width) ?
@@ -380,12 +390,12 @@ function redraw() {
     .attr('cx', function(d) { return G.scale.xAxis(d.value.ev[now].xAxis); })
     .attr('cy', function(d) { return G.scale.yAxis(d.value.ev[now].yAxis); })
     .attr('r', function(d) { return G.scale.width(d.value.ev[now].width) / 2; })
-    .style('fill', function(d) { return d.value.color; })
+    .style('fill', function(d) { return d.value.prop.color; })
     .style('fill-opacity', function(d) { return d.value.ev[now].opac; })
     .select('.tooltip')
     .text(function(d) {
       var n = d.value.ev[now];
-      var msg = d.key + '\n' +
+      var msg = d.value.disp + '\n' +
 	'x:' + n.xAxis + '\n' +
 	'y:' + n.yAxis + '\n' +
 	'w:' + n.width;
@@ -396,7 +406,7 @@ function redraw() {
 function paintButton(button) {
   var reg = button.data('region');
   button.css('background-color', reg.show ?
-    rgba(reg.color, G.config.opacity) :
+    rgba(reg.prop.color, G.config.opacity) :
     $('#region-selector').css('background-color')
   );
 }
@@ -453,8 +463,10 @@ function saveDrawing() {
 }
 
 function rgba(hex, alpha) {
-  var m = hex.match(/#?(..)(..)(..)/);
-  return 'rgba(' + parseInt(m[1],16) + ',' + parseInt(m[2],16) +
+  var m = hex.match(/#?(\w\w)(\w\w)(\w\w)$/);
+  if (! m) { m = hex.match(/#?(\w)(\w)(\w)$/); }
+  var color = 'rgba(' + parseInt(m[1],16) + ',' + parseInt(m[2],16) +
     ',' + parseInt(m[3],16) + ',' + alpha + ')';
+  return color;
 }
 
