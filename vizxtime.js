@@ -1,5 +1,5 @@
 /* jshint esversion: 6, loopfunc: true */
-/* global console, alert, location, d3, $, Parser, queue, Blob, saveAs */
+/* global console, alert, location, d3, $, Parser, queue, Blob, saveAs, md5 */
 
 // http://javascriptissexy.com/oop-in-javascript-what-you-need-to-know/
 // http://yehudakatz.com/2011/08/12/understanding-prototypes-in-javascript/
@@ -9,7 +9,7 @@ function Region(name) {
   // in the constructor, not in .prototype,
   // or else different objects will point to the
   // single same {} due to shallow copying from .prototype
-  this.raw = {};
+  this.raw = [];
   this.ev = {};
   // re-evaluated in recalcRedraw() after each change of expressions
 }
@@ -24,7 +24,8 @@ var G = {
   regTable: {},		// basic table for regions, may contain info about non-used regions
   regObjs: {},		// hash of region objects, keyed by region names
   lastFocus: null,	// the html input element that most recently received input focus
-  domain: {},		// min and max of xAxis, yAxis, width; domain of "time"
+  domain: {},		// min and max of xAxis, yAxis, width
+  time: {},		// time-related info
   scale: {},		// the scale objects for xAxis, yAxis, and width
   fn2Var: [],		// [field name] to [variable name] hash
   fnTree: {},		// field name tree for constructing the nested menu
@@ -43,8 +44,9 @@ $.getJSON(configFN)
     G.config = {
       transition: 1000,
       opacity: 0.4,
+      palette: 0,
       width: {
-	min: 10,
+	min: 40,
 	max: 80
       }
     };
@@ -61,6 +63,22 @@ $.getJSON(configFN)
     throw new Error(msg);
   });
 
+function genPalette(container) {
+  var i, j, t;
+  t = '';
+  for (i=0; i<5; ++i) {
+    t += '<tr>\n';
+    for (j=0; j<8; ++j) {
+      var s = '<td><input id="pal-@" type="radio" name="palette"' +
+	'value="@" /><label for="pal-@" width="100%">@</label></td>\n';
+      t += s.replace(/@/g, (100+i*8+j).toString().substr(1));
+    }
+    t += '</tr>\n';
+  }
+  container.append('table').html('<table>' + t + '</table>');
+  $('#pal-00').attr('checked', 1);
+}
+
 function init(error, data) {
   /******************* received input data files *******************/
   if (error) { return console.warn(error); }
@@ -71,10 +89,11 @@ function init(error, data) {
   d3.select('#region-file').text(G.config.filename.regions);
   d3.select('#data-file').text(G.config.filename.data);
   ['region', 'time', 'color'].forEach(function(k) {
-    d3.select('#'+k+'-field').text(G.config.dimExpr[k]);
+    d3.select('#'+k+'-field').property('value', G.config.dimExpr[k]);
   });
+  genPalette(d3.select('#palette-field'));
   Object.keys(G.exprFields).forEach(function(k) {
-    d3.select('#'+k+'-field').attr('value', G.config.dimExpr[k]);
+    d3.select('#'+k+'-field').property('value', G.config.dimExpr[k]);
   });
   $('.editable').focus(function () {
     if (G.lastFocus) { G.lastFocus.removeClass('active'); }
@@ -84,15 +103,15 @@ function init(error, data) {
 
   var sample = {};
   sample.region = G.regObjs[Object.keys(G.regObjs)[0]];
-  sample.time = Object.keys(sample.region.raw)[0];
+  sample.time = 0;
   sample.data = sample.region.raw[sample.time];
 
-G.sample = sample;
+//G.sample = sample;
   var fnlist = Object.keys(sample.data).filter(function (d) {
     return d != G.config.dimExpr['region'] &&
       d != G.config.dimExpr['time'];
   });
-G.fnlist = fnlist;
+//G.fnlist = fnlist;
   fnlist.sort(function(a,b) {
     var n = a.length - b.length;
     return n ? -n : a.localeCompare(b);
@@ -121,17 +140,11 @@ G.fnlist = fnlist;
   $('#data-field-names').html(genNestedList(G.fnTree));
   $('#data-field-names > ul').attr('id', 'fn-menu').menu();
 
-  var getTimeField = function (d) {
-    return d[G.config.dimExpr['time']];
-  };
-  var mn = d3.min(data[1], getTimeField),
-      mx = d3.max(data[1], getTimeField);
-
-console.log('### ' + mn + ' ' + mx);
-  G.timeSlider = d3.slider().axis(true).min(mn).max(mx)
+  var mx = G.time.labels.length-1;
+  G.time.slider = d3.slider().axis(true).min(0).max(mx)
     .step(1).value(mx).on('slide', toTime);
-  d3.select('#time-slider').call(G.timeSlider);
-  d3.select('#time-text').text(mx);
+  d3.select('#time-slider').call(G.time.slider);
+  d3.select('#time-text').text(G.time.labels[mx]);
 
   var gpzoom = d3.behavior.zoom()
     .scaleExtent([0.2, 8])
@@ -181,7 +194,6 @@ console.log('### ' + mn + ' ' + mx);
 
     // https://api.jquery.com/data/
     button.data('region', reg);
-    paintButton(button);
   }
 
   $('#region-selector button.region').click(function() {
@@ -196,7 +208,7 @@ console.log('### ' + mn + ' ' + mx);
 
 function organizeData(data) {
   // field name for "region", field name for "time"
-  var name, reg, time, k, region,
+  var name, reg, i, k, region,
     regionFN = G.config.dimExpr['region'],
     timeFN = G.config.dimExpr['time'],
     colorFN = G.config.dimExpr['color'];
@@ -205,15 +217,24 @@ function organizeData(data) {
     name = String(d[regionFN]);
     // skip empty rows
     if (! name) { return; }
-//    reg = new Region(name);
     d.color = d[colorFN];
-    if (! d.color) { d.color = '#000000'; }
-//    reg.prop = d;	// the original properties from the regions file
+    if (! d.color) { d.color = '#000'; }
     delete d[regionFN];
     delete d[colorFN];
     G.regTable[name] = d;
   });
-console.log(Object.keys(G.regTable));
+
+  G.time.labels = data[1].map(function (d) {
+    return d[G.config.dimExpr['time']];
+  }).filter(function(v, i, self) {
+    // https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
+    return self.indexOf(v) == i;
+  }).sort();
+  G.time.l2i = {}; // label-to-index converter
+  for (i=0; i<G.time.labels.length; ++i) {
+    G.time.l2i[G.time.labels[i]] = i;
+  }
+  // from now on, use time indices instead of time labels
 
   // initialize G.regObjs from the data file
   data[1].forEach(function (d) {
@@ -225,16 +246,16 @@ console.log(Object.keys(G.regTable));
       return;
     }
     if (! (name in G.regObjs)) { G.regObjs[name] = new Region(name); }
-    G.regObjs[name].raw[d[timeFN]] = d;
+    G.regObjs[name].raw[G.time.l2i[d[timeFN]]] = d;
     G.regObjs[name].prop = G.regTable[name];
   });
 
   // join the regions file into the .raw field of region objects
   for (name in G.regObjs) {
     reg = G.regObjs[name];
-    for (time in reg.raw) {
+    for (i=0; i<G.time.labels.length; ++i) {
       for (k in reg.prop) {
-	reg.raw[time][k] = reg.prop[k];
+	reg.raw[i][k] = reg.prop[k];
       }
     }
   }
@@ -281,7 +302,7 @@ function pasteFieldName(div) {
 }
 
 function recalcRedraw() {
-  var rawExpr, expr, field, name, reg, region, time, fn, k;
+  var rawExpr, expr, field, name, reg, region, i, fn, k;
   for (field in G.exprFields) {
     G.domain[field] = { max: -9e99, min: 9e99 };
     rawExpr = expr = d3.select('#'+field+'-field').property('value');
@@ -300,39 +321,42 @@ function recalcRedraw() {
     G.config.dimExpr[field] = rawExpr;
   }
 
-  G.domain.time = {};
-  for (region in G.regObjs) {
-    for (time in G.regObjs[region].raw) {
-      G.domain.time[time] = 1;
-    }
-  }
-
+  var palette = parseInt($('input[name=palette]:checked').val());
   for (name in G.regObjs) {
     reg = G.regObjs[name];
-    for (time in G.domain.time) {
-      reg.ev[time] = {};
-      if (typeof reg.raw[time] == 'undefined') {
-	reg.raw[time] = {};
+    var col = reg.prop.color;
+    if (col.match(/#?(\w\w)(\w\w)(\w\w)$/) || col.match(/#?(\w)(\w)(\w)$/)) {
+      reg.rgbcolor = col;
+    } else {
+      var m5 = md5(col);
+      reg.rgbcolor = '#' + (m5 + m5).substring(palette, palette+3);
+      // https://github.com/blueimp/JavaScript-MD5
+    }
+    paintButton(reg.button);
+    for (i=0; i<G.time.labels.length; ++i) {
+      reg.ev[i] = {};
+      if (typeof reg.raw[i] == 'undefined') {
+	reg.raw[i] = {};
       }
       var subst = {};
-      for (fn in reg.raw[time]) {
-	subst[G.fn2Var[fn]] = reg.raw[time][fn];
+      for (fn in reg.raw[i]) {
+	subst[G.fn2Var[fn]] = reg.raw[i][fn];
       }
       for (field in G.exprFields) {
 	try {
 	  var v = parseFloat(G.exprFields[field].evaluate(subst));
 	  if (v > G.domain[field].max) { G.domain[field].max = v; }
 	  if (v < G.domain[field].min) { G.domain[field].min = v; }
-	  reg.ev[time][field] = v;
+	  reg.ev[i][field] = v;
 	} catch(e) {
-	  console.log('Failed evaluating "' + field + '" field for ' + time + ',' + region + '\n' + e.toString());
+	  console.log('Failed evaluating "' + field + '" field for ' + G.time.labels[i] + ',' + region + '\n' + e.toString());
 	}
       }
       reg.disp = G.config.disp.replace(G.config.dimExpr.region, reg.name);
       for (field in reg.prop) {
         reg.disp = reg.disp.replace(field, reg.prop[field]);
       }
-      var now = reg.ev[time];
+      var now = reg.ev[i];
       now.opac =
 	isNaN(now.xAxis) || isNaN(now.yAxis) || isNaN(now.width) ?
 	0 : G.config.opacity;
@@ -383,14 +407,14 @@ function recalcRedraw() {
 }
 
 function redraw() {
-  var now = G.timeSlider.value();
+  var now = G.time.slider.value();
   G.canvas.selectAll('.region')
     .transition()
     .duration(G.config.transition)
     .attr('cx', function(d) { return G.scale.xAxis(d.value.ev[now].xAxis); })
     .attr('cy', function(d) { return G.scale.yAxis(d.value.ev[now].yAxis); })
     .attr('r', function(d) { return G.scale.width(d.value.ev[now].width) / 2; })
-    .style('fill', function(d) { return d.value.prop.color; })
+    .style('fill', function(d) { return d.value.rgbcolor; })
     .style('fill-opacity', function(d) { return d.value.ev[now].opac; })
     .select('.tooltip')
     .text(function(d) {
@@ -406,13 +430,13 @@ function redraw() {
 function paintButton(button) {
   var reg = button.data('region');
   button.css('background-color', reg.show ?
-    rgba(reg.prop.color, G.config.opacity) :
+    rgba(reg.rgbcolor, G.config.opacity) :
     $('#region-selector').css('background-color')
   );
 }
 
 function toTime(evt, value) {
-  d3.select('#time-text').text(value);
+  d3.select('#time-text').text(G.time.labels[value]);
   G.now = value;
   redraw();
 }

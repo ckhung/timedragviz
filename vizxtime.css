@@ -108,3 +108,23 @@ ul.menu-tree { list-style: none; }
     background-color: #eed;
 }
 
+#palette-field {
+    border-collapse: collapse;
+}
+#palette-field td {
+    width: 2em;
+    border: 1px solid black;
+}
+#palette-field input[type="radio"] {
+    display:none;
+}
+#palette-field input[type="radio"]:checked + label {
+    background: #8f8;
+}
+#palette-field label {
+    margin: 0;
+    display: block;
+    text-align: center;
+    width: 100%;
+} 
+

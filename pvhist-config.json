@@ -1,0 +1,20 @@
+{
+  "filename": {
+    "regions": "stocks.csv",
+    "data": "pvhist-data.csv"
+  },
+  "dimExpr": {
+    "region": "代號",
+    "time": "月份",
+    "xAxis": "價",
+    "yAxis": "量",
+    "width": "1",
+    "color": "類別"
+  },
+  "width": {
+    "min": 40,
+    "max": 80
+  },
+  "disp": "代號 名稱",
+  "transition": 300
+}
